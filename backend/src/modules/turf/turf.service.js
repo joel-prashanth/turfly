@@ -31,8 +31,15 @@ const getMyTurfs = async (ownerId) => {
   return turfs;
 };
 
+const getAllTurfs = async () => {
+  const turfs = await prisma.turf.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+  return turfs;
+};
 
 module.exports = {
   createTurf,
-  getMyTurfs
+  getMyTurfs,
+  getAllTurfs,
 };

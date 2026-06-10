@@ -47,7 +47,25 @@ const getMyTurfs = async (req, res) => {
   }
 };
 
+const getAllTurfs = async (req, res) => {
+  try {
+    const turfs = await turfService.getAllTurfs();
+
+    return res.status(200).json({
+      success: true,
+      count: turfs.length,
+      turfs,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createTurf,
   getMyTurfs,
+  getAllTurfs,
 };
