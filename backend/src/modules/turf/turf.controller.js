@@ -1,6 +1,6 @@
-const createTurfService = require("./turf.service");
+const turfService = require("./turf.service");
 
-const createTurfController = async (req, res) => {
+const createTurf = async (req, res) => {
   try {
     const { name, description, location, pricePerHour } = req.body;
 
@@ -14,7 +14,7 @@ const createTurfController = async (req, res) => {
       ownerId,
     };
 
-    const turf = await createTurfService.createTurf(turfData);
+    const turf = await turfService.createTurf(turfData);
 
     return res.status(201).json({
       success: true,
@@ -29,6 +29,25 @@ const createTurfController = async (req, res) => {
   }
 };
 
+const getMyTurfs = async (req, res) => {
+  try {
+    const ownerId = req.user.userId;
+    const turfs = await turfService.getMyTurfs(ownerId);
+
+    return res.status(200).json({
+      success: true,
+      count: turfs.length,
+      turfs,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
-  createTurfController,
+  createTurf,
+  getMyTurfs,
 };
