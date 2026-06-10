@@ -64,8 +64,28 @@ const getAllTurfs = async (req, res) => {
   }
 };
 
+const getTurfById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const turf = await turfService.getTurfById(id);
+
+
+
+    return res.status(200).json({
+      success: true,
+      turf,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createTurf,
   getMyTurfs,
   getAllTurfs,
+  getTurfById,
 };

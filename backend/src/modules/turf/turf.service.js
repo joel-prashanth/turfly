@@ -38,8 +38,27 @@ const getAllTurfs = async () => {
   return turfs;
 };
 
+const getTurfById = async (turfId) => {
+   if (!turfId) {
+    throw new Error("Turf id is required");
+  }
+
+
+  const id = Number(turfId);
+  const turf = await prisma.turf.findUnique({
+    where: { id: turfId },
+  });
+
+  if (!turf) {
+    throw new Error("Turf not found");
+  }
+
+  return turf;
+};
+
 module.exports = {
   createTurf,
   getMyTurfs,
   getAllTurfs,
+  getTurfById,
 };
