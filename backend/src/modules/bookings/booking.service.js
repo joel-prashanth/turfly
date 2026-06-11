@@ -39,6 +39,23 @@ const createBooking = async (slotId, playerId) => {
   return booking;
 };
 
+const getMyBookings = async (playerId) => {
+  const bookings = await prisma.booking.findMany({
+    where: {
+      playerId,
+    },
+    include: {
+      slot: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return bookings;
+};
+
 module.exports = {
   createBooking,
+  getMyBookings,
 };

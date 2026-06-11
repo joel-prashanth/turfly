@@ -11,7 +11,13 @@ router.post(
   "/",
   authenticate,
   authorize("PLAYER"),
-  bookingController.createBooking
+  bookingController.createBooking,
+);
+router.get(
+  "/my",
+  authenticate,
+  authorize("PLAYER"),
+  bookingController.getMyBookings,
 );
 
 module.exports = router;
