@@ -27,6 +27,26 @@ const createSlot = async (req, res) => {
   }
 };
 
+const getSlotsByTurfId = async (req, res) => {
+  try {
+    const { turfId } = req.params;
+
+    const slots = await slotService.getSlotsByTurfId(turfId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Slots retrieved successfully",
+      slots,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createSlot,
+  getSlotsByTurfId,
 };

@@ -61,6 +61,31 @@ const createSlot = async (slotData, ownerId) => {
   return newSlot;
 };
 
+const getSlotsByTurfId = async (turfId) => {
+  
+  const turf = await prisma.turf.findUnique({
+    where: {
+      id: turfId,
+    },
+  });
+
+  if (!turf) {
+    throw new Error("Turf not found");
+  }
+
+  const slots = await prisma.slot.findMany({
+    where: {
+      turfId,
+    },
+    orderBy: {
+      startTime: "asc",
+    },
+  });
+
+  return slots;
+};
+
 module.exports = {
   createSlot,
+  getSlotsByTurfId,
 };

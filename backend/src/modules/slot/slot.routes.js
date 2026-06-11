@@ -6,4 +6,6 @@ const { createSlot, getSlotsByTurfId } = require("./slot.controller");
 
 router.post("/", authenticate, authorize("OWNER"), createSlot);
 
+router.get("/turf/:turfId", getSlotsByTurfId);
+
 module.exports = router;
