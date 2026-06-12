@@ -25,6 +25,15 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum Sport {
+  FOOTBALL
+  CRICKET
+  BADMINTON
+  TENNIS
+  BASKETBALL
+  VOLLEYBALL
+}
+
 model User {
   id           String   @id @default(uuid())
   name         String
@@ -41,19 +50,23 @@ model User {
 }
 
 model Turf {
-  id           String   @id @default(uuid())
-  name         String
-  description  String?
-  location     String
-  pricePerHour Float
+  id            String   @id @default(uuid())
+  name          String
+  description   String
+  location      String
+  pricePerHour  Float
 
-  ownerId      String
-  owner        User @relation(fields: [ownerId], references: [id])
+  sport         Sport
+  imageUrl      String?
+  isActive      Boolean  @default(true)
 
-  slots        Slot[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  ownerId       String
+  owner         User @relation(fields: [ownerId], references: [id])
+
+  slots         Slot[]
 }
 
 model Slot {

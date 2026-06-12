@@ -40,6 +40,7 @@ const getMyTurfs = async (req, res) => {
       turfs,
     });
   } catch (error) {
+    console.error(error);
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -69,11 +70,29 @@ const getTurfById = async (req, res) => {
     const { id } = req.params;
     const turf = await turfService.getTurfById(id);
 
-
-
     return res.status(200).json({
       success: true,
       turf,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const deleteTurfController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const ownerId = req.user.userId;
+
+    const result = await turfService.deleteTurf(id, ownerId);
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
     });
   } catch (error) {
     return res.status(400).json({
@@ -88,4 +107,5 @@ module.exports = {
   getMyTurfs,
   getAllTurfs,
   getTurfById,
+  deleteTurfController,
 };

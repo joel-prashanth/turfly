@@ -1,14 +1,22 @@
 const prisma = require("../../config/prisma");
 
 const createTurf = async (turfData) => {
-  const { name, description, location, pricePerHour, ownerId } = turfData;
+  const {
+    name,
+    description,
+    location,
+    pricePerHour,
+    sport,
+    imageUrl,
+    ownerId,
+  } = turfData;
 
-  if (!name || !location || !pricePerHour) {
-    throw new Error("Name, location and pricePerHour are required");
+  if (!name || !location || !pricePerHour || !sport) {
+    throw new Error("Name, location, price per hour and sport are required.");
   }
 
-  if (pricePerHour <= 0) {
-    throw new Error("pricePerHour must be greater than 0");
+  if (Number(pricePerHour) <= 0) {
+    throw new Error("Price per hour must be greater than 0.");
   }
 
   const newTurf = await prisma.turf.create({
@@ -16,44 +24,98 @@ const createTurf = async (turfData) => {
       name,
       description,
       location,
-      pricePerHour,
+      pricePerHour: Number(pricePerHour),
+      sport,
+      imageUrl,
       ownerId,
     },
   });
+
   return newTurf;
 };
 
 const getMyTurfs = async (ownerId) => {
-  const turfs = await prisma.turf.findMany({
-    where: { ownerId },
-    orderBy: { createdAt: "desc" },
+  return prisma.turf.findMany({
+    where: {
+      ownerId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
-  return turfs;
 };
 
 const getAllTurfs = async () => {
-  const turfs = await prisma.turf.findMany({
-    orderBy: { createdAt: "desc" },
+  return prisma.turf.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
   });
-  return turfs;
 };
 
 const getTurfById = async (turfId) => {
-   if (!turfId) {
-    throw new Error("Turf id is required");
+  if (!turfId) {
+    throw new Error("Turf id is required.");
   }
 
-
-  const id = Number(turfId);
   const turf = await prisma.turf.findUnique({
-    where: { id: turfId },
+    where: {
+      id: turfId,
+    },
   });
 
   if (!turf) {
-    throw new Error("Turf not found");
+    throw new Error("Turf not found.");
   }
 
   return turf;
+};
+
+const deleteTurf = async (turfId, ownerId) => {
+  const turf = await prisma.turf.findUnique({
+    where: {
+      id: turfId,
+    },
+    include: {
+      slots: {
+        include: {
+          booking: true,
+        },
+      },
+    },
+  });
+
+  if (!turf) {
+    throw new Error("Turf not found.");
+  }
+
+  if (turf.ownerId !== ownerId) {
+    throw new Error("You are not authorized to delete this turf.");
+  }
+
+  const hasBookings = turf.slots.some((slot) => slot.booking !== null);
+
+  if (hasBookings) {
+    throw new Error("This turf has active bookings and cannot be deleted.");
+  }
+
+  await prisma.$transaction([
+    prisma.slot.deleteMany({
+      where: {
+        turfId,
+      },
+    }),
+
+    prisma.turf.delete({
+      where: {
+        id: turfId,
+      },
+    }),
+  ]);
+
+  return {
+    message: "Turf deleted successfully.",
+  };
 };
 
 module.exports = {
@@ -61,4 +123,5 @@ module.exports = {
   getMyTurfs,
   getAllTurfs,
   getTurfById,
+  deleteTurf,
 };
