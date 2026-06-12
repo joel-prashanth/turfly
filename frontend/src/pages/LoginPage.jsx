@@ -1,49 +1,77 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
 import { login } from "../api/authApi";
+
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
 
 export default function LoginPage() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setIsLoggingIn(true);
+
     try {
-      const result = await login(email, password);
+      const response = await login(email, password);
 
-      localStorage.setItem("user", JSON.stringify(result.data.user));
+      const user = response.data.user;
 
-      navigate("/");
+      localStorage.setItem("user", JSON.stringify(user));
+
+      if (user.role === "OWNER") {
+        toast.success(`🏟️ Welcome back, ${user.name}!`);
+
+        navigate("/owner");
+      } else {
+        toast.success(`⚽ Welcome back, ${user.name}!`);
+
+        navigate("/");
+      }
     } catch (error) {
-      alert(error?.response?.data?.message || "Login failed");
+      console.error(error);
+
+      toast.error(error?.response?.data?.message || "Login failed");
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Login</h1>
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
+      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-xl">
+        <h1 className="mb-2 text-3xl font-bold text-slate-900">Welcome Back</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          className="border p-2 w-full"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <p className="mb-8 text-slate-500">Login to continue to Turfly.</p>
 
-        <input
-          type="password"
-          className="border p-2 w-full"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <Input
+            label="Email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-        <button className="bg-black text-white px-4 py-2 rounded">Login</button>
-      </form>
+          <Input
+            label="Password"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <Button type="submit" className="w-full" disabled={isLoggingIn}>
+            {isLoggingIn ? "Logging in..." : "Login"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }

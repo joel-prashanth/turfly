@@ -22,9 +22,15 @@ export default function MyBookingsPage() {
     fetchBookings();
   }, []);
 
-  if (loading) {
-    return <h2>Loading...</h2>;
-  }
+if (loading) {
+  return (
+    <Container className="py-20">
+      <div className="flex justify-center">
+        <Spinner size="lg" />
+      </div>
+    </Container>
+  );
+}
 
   return (
     <div className="p-6">

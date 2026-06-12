@@ -9,6 +9,7 @@ const {
   getAllTurfs,
   getTurfById,
   deleteTurfController,
+  updateTurfController,
 } = require("./turf.controller");
 
 const router = express.Router();
@@ -17,26 +18,13 @@ const router = express.Router();
 router.get("/", getAllTurfs);
 
 // Owner Routes
-router.get(
-  "/my",
-  authenticate,
-  authorize("OWNER"),
-  getMyTurfs
-);
+router.get("/my", authenticate, authorize("OWNER"), getMyTurfs);
 
-router.post(
-  "/",
-  authenticate,
-  authorize("OWNER"),
-  createTurf
-);
+router.post("/", authenticate, authorize("OWNER"), createTurf);
 
-router.delete(
-  "/:id",
-  authenticate,
-  authorize("OWNER"),
-  deleteTurfController
-);
+router.put("/:id", authenticate, authorize("OWNER"), updateTurfController);
+
+router.delete("/:id", authenticate, authorize("OWNER"), deleteTurfController);
 
 // Keep this LAST among GET routes with parameters
 router.get("/:id", getTurfById);

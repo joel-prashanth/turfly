@@ -118,10 +118,64 @@ const deleteTurf = async (turfId, ownerId) => {
   };
 };
 
+const updateTurf = async (turfId, ownerId, turfData) => {
+  const turf = await prisma.turf.findUnique({
+    where: {
+      id: turfId,
+    },
+  });
+
+  if (!turf) {
+    throw new Error("Turf not found.");
+  }
+
+  if (turf.ownerId !== ownerId) {
+    throw new Error("You are not authorized to edit this turf.");
+  }
+
+  const {
+    name,
+    description,
+    location,
+    pricePerHour,
+    sport,
+    imageUrl,
+    isActive,
+  } = turfData;
+
+  if (!name || !location || !sport) {
+    throw new Error("Name, location and sport are required.");
+  }
+
+  if (Number(pricePerHour) <= 0) {
+    throw new Error("Price per hour must be greater than 0.");
+  }
+
+  const updatedTurf = await prisma.turf.update({
+    where: {
+      id: turfId,
+    },
+    data: {
+      name,
+      description,
+      location,
+      pricePerHour: Number(pricePerHour),
+      sport,
+      imageUrl,
+      isActive,
+    },
+  });
+
+  return updatedTurf;
+};
+
 module.exports = {
   createTurf,
   getMyTurfs,
   getAllTurfs,
+  getTurfById,
+  deleteTurf,
+  updateTurf,
   getTurfById,
   deleteTurf,
 };
