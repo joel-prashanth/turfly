@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import toast from "react-hot-toast";
+
+import { useAuth } from "../hooks/useAuth";
 
 import { getTurfById } from "../api/turfApi";
 import { getSlotsByTurfId } from "../api/slotApi";
@@ -7,19 +10,18 @@ import { createBooking } from "../api/bookingApi";
 
 import Container from "../components/ui/Container";
 import PageHeader from "../components/ui/PageHeader";
+import Spinner from "../components/ui/Spinner";
 
 import TurfInfo from "../components/turf/TurfInfo";
 import SlotCard from "../components/turf/SlotCard";
-import toast from "react-hot-toast";
 
 export default function TurfDetailsPage() {
   const { id } = useParams();
+  const { user } = useAuth();
 
   const [turf, setTurf] = useState(null);
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,7 +32,7 @@ export default function TurfDetailsPage() {
         setTurf(turfData.turf);
         setSlots(slotData.slots);
       } catch (error) {
-        console.error(error);
+        toast.error("Failed to load turf details.");
       } finally {
         setLoading(false);
       }
@@ -44,7 +46,6 @@ export default function TurfDetailsPage() {
       await createBooking(slotId);
 
       const slotData = await getSlotsByTurfId(id);
-
       setSlots(slotData.slots);
 
       toast.success("Booking Successful 🎉");

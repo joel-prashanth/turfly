@@ -1,38 +1,69 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import PublicRoute from "./components/auth/PublicRoute";
 
+import AuthLayout from "./components/layout/AuthLayout";
 import PlayerLayout from "./components/layout/PlayerLayout";
 import OwnerLayout from "./components/layout/OwnerLayout";
-import AuthLayout from "./components/layout/AuthLayout";
 
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 import TurfListPage from "./pages/TurfListPage";
 import TurfDetailsPage from "./pages/TurfDetailsPage";
 import MyBookingsPage from "./pages/MyBookingsPage";
 
 import OwnerDashboardPage from "./pages/OwnerDashboardPage";
-import CreateTurfPage from "./pages/CreateTurfPage";
 import MyTurfsPage from "./pages/MyTurfsPage";
-import CreateSlotPage from "./pages/CreateSlotPage";
+import CreateTurfPage from "./pages/CreateTurfPage";
 import EditTurfPage from "./pages/EditTurfPage";
-
+import CreateSlotPage from "./pages/CreateSlotPage";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Authentication */}
+        {/* ================= Authentication ================= */}
         <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            }
+          />
+
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <RegisterPage />
+              </PublicRoute>
+            }
+          />
         </Route>
 
-        {/* Player */}
+        {/* ================= Player ================= */}
         <Route element={<PlayerLayout />}>
-          <Route path="/" element={<TurfListPage />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute allowedRole="PLAYER">
+                <TurfListPage />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/turfs/:id" element={<TurfDetailsPage />} />
+          <Route
+            path="/turfs/:id"
+            element={
+              <ProtectedRoute allowedRole="PLAYER">
+                <TurfDetailsPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/bookings"
@@ -44,10 +75,10 @@ function App() {
           />
         </Route>
 
-        {/* Owner */}
+        {/* ================= Owner ================= */}
         <Route element={<OwnerLayout />}>
           <Route
-            path="/owner"
+            path="/owner/dashboard"
             element={
               <ProtectedRoute allowedRole="OWNER">
                 <OwnerDashboardPage />
@@ -74,19 +105,19 @@ function App() {
           />
 
           <Route
-            path="/owner/turfs/:turfId/slots/create"
+            path="/owner/turfs/:turfId/edit"
             element={
               <ProtectedRoute allowedRole="OWNER">
-                <CreateSlotPage />
+                <EditTurfPage />
               </ProtectedRoute>
             }
           />
 
           <Route
-            path="/owner/turfs/:turfId/edit"
+            path="/owner/turfs/:turfId/slots/create"
             element={
               <ProtectedRoute allowedRole="OWNER">
-                <EditTurfPage />
+                <CreateSlotPage />
               </ProtectedRoute>
             }
           />

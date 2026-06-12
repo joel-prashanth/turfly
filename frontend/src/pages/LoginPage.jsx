@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import { login } from "../api/authApi";
+import { useAuth } from "../hooks/useAuth";
 
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,28 +19,29 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setIsLoggingIn(true);
+    if (!email.trim() || !password.trim()) {
+      toast.error("Please enter your email and password.");
+      return;
+    }
 
     try {
-      const response = await login(email, password);
+      setIsLoggingIn(true);
 
-      const user = response.data.user;
-
-      localStorage.setItem("user", JSON.stringify(user));
+      const user = await login(email, password);
 
       if (user.role === "OWNER") {
         toast.success(`🏟️ Welcome back, ${user.name}!`);
-
-        navigate("/owner");
+        navigate("/owner/dashboard", {
+          replace: true,
+        });
       } else {
         toast.success(`⚽ Welcome back, ${user.name}!`);
-
-        navigate("/");
+        navigate("/", {
+          replace: true,
+        });
       }
     } catch (error) {
-      console.error(error);
-
-      toast.error(error?.response?.data?.message || "Login failed");
+      toast.error(error?.response?.data?.message || "Login failed.");
     } finally {
       setIsLoggingIn(false);
     }
@@ -54,7 +57,9 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <Input
             label="Email"
+            type="email"
             placeholder="Enter your email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -63,14 +68,25 @@ export default function LoginPage() {
             label="Password"
             type="password"
             placeholder="Enter your password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <Button type="submit" className="w-full" disabled={isLoggingIn}>
-            {isLoggingIn ? "Logging in..." : "Login"}
+          <Button type="submit" className="w-full" loading={isLoggingIn}>
+            Login
           </Button>
         </form>
+
+        <p className="mt-6 text-center text-sm text-slate-500">
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            className="font-semibold text-green-600 hover:text-green-700"
+          >
+            Create one
+          </Link>
+        </p>
       </div>
     </div>
   );

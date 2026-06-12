@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  CalendarDays,
+  Pencil,
+  Plus,
+  PlusCircle,
+  Search,
+  Trash2,
+} from "lucide-react";
 import toast from "react-hot-toast";
-import { Plus, PlusCircle, Search } from "lucide-react";
 
 import Button from "../components/ui/Button";
 import Container from "../components/ui/Container";
@@ -34,7 +41,6 @@ function MyTurfsPage() {
       const data = await getMyTurfs();
       setTurfs(data.turfs);
     } catch (error) {
-      console.error(error);
       toast.error("Failed to fetch your turfs");
     } finally {
       setLoading(false);
@@ -48,8 +54,6 @@ function MyTurfsPage() {
   const filteredTurfs = turfs.filter((turf) =>
     turf.name.toLowerCase().includes(search.toLowerCase()),
   );
-
-  const user = JSON.parse(localStorage.getItem("user"));
 
   const handleDelete = (id, name) => {
     setDeleteModal({
@@ -69,8 +73,6 @@ function MyTurfsPage() {
 
       toast.success("Turf deleted successfully");
     } catch (error) {
-      console.error(error);
-
       toast.error(error?.response?.data?.message || "Failed to delete turf");
     } finally {
       setDeleteLoading(false);
@@ -147,8 +149,31 @@ function MyTurfsPage() {
             <TurfCard
               key={turf.id}
               turf={turf}
-              role={user?.role}
-              onDelete={(turf) => handleDelete(turf.id, turf.name)}
+              actions={
+                <div className="flex flex-wrap gap-3">
+                  <Link to={`/owner/turfs/${turf.id}/slots/create`}>
+                    <Button>
+                      <CalendarDays size={18} className="mr-2" />
+                      Create Slot
+                    </Button>
+                  </Link>
+
+                  <Link to={`/owner/turfs/${turf.id}/edit`}>
+                    <Button variant="secondary">
+                      <Pencil size={18} className="mr-2" />
+                      Edit
+                    </Button>
+                  </Link>
+
+                  <Button
+                    variant="danger"
+                    onClick={() => handleDelete(turf.id, turf.name)}
+                  >
+                    <Trash2 size={18} className="mr-2" />
+                    Delete
+                  </Button>
+                </div>
+              }
             />
           ))}
         </div>

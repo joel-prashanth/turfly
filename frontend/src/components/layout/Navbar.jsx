@@ -5,20 +5,20 @@ import Button from "../ui/Button";
 import Container from "../ui/Container";
 import Logo from "./Logo";
 
-import { logout } from "../../api/authApi";
+import { useAuth } from "../../hooks/useAuth";
 
 function Navbar() {
   const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
     try {
       await logout();
 
-      localStorage.removeItem("user");
-
-      navigate("/login");
+      navigate("/login", {
+        replace: true,
+      });
     } catch (error) {
       console.error(error);
     }
@@ -41,7 +41,10 @@ function Navbar() {
           )}
 
           {user?.role === "OWNER" && (
-            <Link to="/owner" className="transition hover:text-green-600">
+            <Link
+              to="/owner/dashboard"
+              className="transition hover:text-green-600"
+            >
               Dashboard
             </Link>
           )}
@@ -56,10 +59,12 @@ function Navbar() {
             </div>
           )}
 
-          <Button variant="ghost" onClick={handleLogout}>
-            <LogOut size={18} className="mr-2" />
-            Logout
-          </Button>
+          {user && (
+            <Button variant="ghost" onClick={handleLogout}>
+              <LogOut size={18} className="mr-2" />
+              Logout
+            </Button>
+          )}
         </div>
       </Container>
     </header>

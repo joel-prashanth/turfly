@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { getMyBookings } from "../api/bookingApi";
+import Container from "../components/ui/Container";
+import Spinner from "../components/ui/Spinner";
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState([]);
@@ -13,7 +15,6 @@ export default function MyBookingsPage() {
 
         setBookings(data.bookings);
       } catch (error) {
-        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -22,15 +23,15 @@ export default function MyBookingsPage() {
     fetchBookings();
   }, []);
 
-if (loading) {
-  return (
-    <Container className="py-20">
-      <div className="flex justify-center">
-        <Spinner size="lg" />
-      </div>
-    </Container>
-  );
-}
+  if (loading) {
+    return (
+      <Container className="py-20">
+        <div className="flex justify-center">
+          <Spinner size="lg" />
+        </div>
+      </Container>
+    );
+  }
 
   return (
     <div className="p-6">

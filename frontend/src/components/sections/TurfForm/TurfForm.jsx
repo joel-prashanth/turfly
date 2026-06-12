@@ -48,7 +48,7 @@ function TurfForm({ mode = "create", turfId = null }) {
           isActive: turf.isActive,
         });
       } catch (error) {
-        console.error(error);
+        
         toast.error("Failed to fetch turf.");
         navigate("/owner/turfs");
       } finally {
@@ -89,7 +89,7 @@ function TurfForm({ mode = "create", turfId = null }) {
 
       navigate("/owner/turfs");
     } catch (error) {
-      console.error(error);
+      
 
       toast.error(error?.response?.data?.message || "Something went wrong.");
     } finally {

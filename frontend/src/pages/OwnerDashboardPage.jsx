@@ -1,22 +1,23 @@
 import { Link } from "react-router-dom";
 import { MapPinned, CalendarDays, Plus, Layers3 } from "lucide-react";
 
+import { useAuth } from "../hooks/useAuth";
+
 import Container from "../components/ui/Container";
 import PageHeader from "../components/ui/PageHeader";
 import StatCard from "../components/owner/StatCard";
 import Button from "../components/ui/Button";
 
 function OwnerDashboardPage() {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const { user } = useAuth();
 
   return (
     <Container className="py-10">
       <PageHeader
-        title={`Welcome back, ${user.name} 👋`}
+        title={`Welcome back, ${user?.name} 👋`}
         subtitle="Manage your sports venues from one place."
       />
 
-      {/* Stats */}
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="My Turfs"
@@ -43,7 +44,6 @@ function OwnerDashboardPage() {
         />
       </div>
 
-      {/* Quick Actions */}
       <div className="mt-12">
         <PageHeader
           title="Quick Actions"
