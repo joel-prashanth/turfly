@@ -4,11 +4,12 @@ import toast from "react-hot-toast";
 
 import Card from "../../ui/Card";
 import Button from "../../ui/Button";
+import Spinner from "../../ui/Spinner";
 
 import TurfBasicInfo from "./TurfBasicInfo";
 import TurfPricing from "./TurfPricing";
-import TurfImage from "./TurfImage";
-import Spinner from "../../ui/Spinner";
+import TurfImageSection from "./TurfImageSection";
+
 import { createTurf, updateTurf, getTurfById } from "../../../api/turfApi";
 
 function TurfForm({ mode = "create", turfId = null }) {
@@ -23,7 +24,10 @@ function TurfForm({ mode = "create", turfId = null }) {
     location: "",
     sport: "FOOTBALL",
     pricePerHour: "",
-    imageUrl: "",
+    image: {
+      url: "",
+      publicId: "",
+    },
     isActive: true,
   });
 
@@ -32,6 +36,7 @@ function TurfForm({ mode = "create", turfId = null }) {
       setFetching(false);
       return;
     }
+
     const fetchTurf = async () => {
       try {
         const response = await getTurfById(turfId);
@@ -44,11 +49,15 @@ function TurfForm({ mode = "create", turfId = null }) {
           location: turf.location,
           sport: turf.sport,
           pricePerHour: turf.pricePerHour,
-          imageUrl: turf.imageUrl || "",
+          image: {
+            url: turf.imageUrl || "",
+            publicId: turf.imagePublicId || "",
+          },
           isActive: turf.isActive,
         });
       } catch (error) {
-        
+        console.error(error);
+
         toast.error("Failed to fetch turf.");
         navigate("/owner/turfs");
       } finally {
@@ -68,15 +77,38 @@ function TurfForm({ mode = "create", turfId = null }) {
     }));
   };
 
+  const handleImageChange = (image) => {
+    setFormData((prev) => ({
+      ...prev,
+      image,
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.pricePerHour) {
+      toast.error("Please enter the price per hour.");
+      return;
+    }
+
+    if (!formData.image.url) {
+      toast.error("Please upload a turf image.");
+      return;
+    }
 
     try {
       setLoading(true);
 
       const payload = {
-        ...formData,
+        name: formData.name,
+        description: formData.description,
+        location: formData.location,
+        sport: formData.sport,
         pricePerHour: Number(formData.pricePerHour),
+        imageUrl: formData.image.url,
+        imagePublicId: formData.image.publicId,
+        isActive: formData.isActive,
       };
 
       if (mode === "create") {
@@ -89,22 +121,17 @@ function TurfForm({ mode = "create", turfId = null }) {
 
       navigate("/owner/turfs");
     } catch (error) {
-      
+      console.error(error);
 
       toast.error(error?.response?.data?.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
-
-    if (!formData.pricePerHour) {
-      toast.error("Please enter the price per hour.");
-      return;
-    }
   };
 
   if (fetching) {
     return (
-      <Card className="p-10">
+      <Card className="mx-auto max-w-3xl p-10">
         <div className="flex justify-center">
           <Spinner size="lg" />
         </div>
@@ -119,16 +146,15 @@ function TurfForm({ mode = "create", turfId = null }) {
 
         <TurfPricing formData={formData} handleChange={handleChange} />
 
-        <TurfImage formData={formData} handleChange={handleChange} />
+        <TurfImageSection image={formData.image} onChange={handleImageChange} />
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading
-            ? mode === "create"
-              ? "Creating Turf..."
-              : "Saving Changes..."
-            : mode === "create"
-              ? "Create Turf"
-              : "Save Changes"}
+        <Button
+          type="submit"
+          className="w-full"
+          loading={loading}
+          disabled={loading}
+        >
+          {mode === "create" ? "Create Turf" : "Save Changes"}
         </Button>
       </form>
     </Card>
