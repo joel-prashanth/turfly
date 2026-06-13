@@ -3,9 +3,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import PublicRoute from "./components/auth/PublicRoute";
 
-import AuthLayout from "./components/layout/AuthLayout";
+import PublicLayout from "./components/layout/PublicLayout";
 import PlayerLayout from "./components/layout/PlayerLayout";
 import OwnerLayout from "./components/layout/OwnerLayout";
+
+import LandingPage from "./pages/LandingPage";
 
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -24,8 +26,14 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ================= Authentication ================= */}
-        <Route element={<AuthLayout />}>
+        {/* ================= Public ================= */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<LandingPage />} />
+
+          <Route path="/turfs" element={<TurfListPage />} />
+
+          <Route path="/turfs/:id" element={<TurfDetailsPage />} />
+
           <Route
             path="/login"
             element={
@@ -47,24 +55,6 @@ function App() {
 
         {/* ================= Player ================= */}
         <Route element={<PlayerLayout />}>
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute allowedRole="PLAYER">
-                <TurfListPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/turfs/:id"
-            element={
-              <ProtectedRoute allowedRole="PLAYER">
-                <TurfDetailsPage />
-              </ProtectedRoute>
-            }
-          />
-
           <Route
             path="/bookings"
             element={

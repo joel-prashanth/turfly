@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { getTurfs } from "../api/turfApi";
 
@@ -8,84 +8,105 @@ import Container from "../components/ui/Container";
 import EmptyState from "../components/ui/EmptyState";
 import PageHeader from "../components/ui/PageHeader";
 
-import HeroSection from "../components/sections/HeroSection";
+import TurfFilters from "../components/filters/TurfFilters";
 import TurfCardSkeleton from "../components/skeletons/TurfCardSkeleton";
 import TurfCard from "../components/turf/TurfCard";
 
 export default function TurfListPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [turfs, setTurfs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const search = searchParams.get("search") || "";
+  const sport = searchParams.get("sport") || "";
 
   useEffect(() => {
     const fetchTurfs = async () => {
       try {
-        const data = await getTurfs();
+        setLoading(true);
+
+        const data = await getTurfs({
+          search,
+          sport,
+        });
+
         setTurfs(data.turfs);
       } catch (error) {
-       
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchTurfs();
-  }, []);
+  }, [search, sport]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <Container className="pt-8 pb-20">
-          <HeroSection />
+  const updateFilters = (updates) => {
+    const params = new URLSearchParams(searchParams);
 
-          <div className="mt-16">
-            <PageHeader
-              title="Popular Turfs"
-              subtitle="Handpicked sports venues loved by players."
-            />
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
 
-            <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <TurfCardSkeleton key={index} />
-              ))}
-            </div>
-          </div>
-        </Container>
-      </div>
-    );
-  }
+    setSearchParams(params);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Container className="pt-8 pb-20">
-        <HeroSection />
+      <Container className="py-10">
+        <PageHeader
+          title={sport ? `${sport.replace("_", " ")} Turfs` : "Browse Turfs"}
+          subtitle="Find and book the perfect sports venue."
+        />
 
-        <div className="mt-16">
-          <PageHeader
-            title="Popular Turfs"
-            subtitle="Handpicked sports venues loved by players."
+        <TurfFilters
+          search={search}
+          sport={sport}
+          onSearchChange={(value) =>
+            updateFilters({
+              search: value,
+            })
+          }
+          onSportChange={(value) =>
+            updateFilters({
+              sport: value,
+            })
+          }
+        />
+
+        {loading ? (
+          <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <TurfCardSkeleton key={index} />
+            ))}
+          </div>
+        ) : turfs.length === 0 ? (
+          <EmptyState
+            title="No Turfs Found"
+            description="Try changing your search or filters."
           />
-
-          {turfs.length === 0 ? (
-            <EmptyState
-              title="No Turfs Available"
-              description="Turf owners will appear here once they create their venues."
-            />
-          ) : (
-            <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
-              {turfs.map((turf) => (
-                <TurfCard
-                  key={turf.id}
-                  turf={turf}
-                  actions={
-                    <Link to={`/turfs/${turf.id}`}>
-                      <Button className="w-full">View Details</Button>
-                    </Link>
-                  }
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        ) : (
+          <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
+            {turfs.map((turf) => (
+              <TurfCard
+                key={turf.id}
+                turf={turf}
+                actions={
+                  <Link to={`/turfs/${turf.id}`}>
+                    <Button className="w-full">
+                      View Details
+                    </Button>
+                  </Link>
+                }
+              />
+            ))}
+          </div>
+        )}
       </Container>
     </div>
   );

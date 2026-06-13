@@ -8,16 +8,20 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const initializeAuth = async () => {
-    try {
-      const response = await authApi.getCurrentUser();
-      setUser(response.data.user);
-    } catch (error) {
-      setUser(null);
-    } finally {
-      setLoading(false);
+  try {
+    const response = await authApi.getCurrentUser();
+    setUser(response.user);
+  } catch (error) {
+    // Guest user (no active session)
+    if (error.response?.status !== 401) {
+      console.error("Failed to initialize auth:", error);
     }
-  };
 
+    setUser(null);
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => {
     initializeAuth();
   }, []);
@@ -25,7 +29,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const response = await authApi.login(email, password);
 
-    const user = response.data.user;
+    const user = response.user;
 
     setUser(user);
 

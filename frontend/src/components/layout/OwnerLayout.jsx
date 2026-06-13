@@ -1,13 +1,7 @@
-import { Outlet } from "react-router-dom";
-import Navbar from "./Navbar";
+import BaseLayout from "./BaseLayout";
 
 function OwnerLayout() {
-  return (
-    <div className="min-h-screen bg-slate-100">
-      <Navbar />
-      <Outlet />
-    </div>
-  );
+  return <BaseLayout className="bg-slate-100" />;
 }
 
 export default OwnerLayout;

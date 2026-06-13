@@ -1,13 +1,7 @@
-import { Outlet } from "react-router-dom";
-import Navbar from "./Navbar";
+import BaseLayout from "./BaseLayout";
 
 function PlayerLayout() {
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <Navbar />
-      <Outlet />
-    </div>
-  );
+  return <BaseLayout className="bg-slate-50" />;
 }
 
 export default PlayerLayout;
