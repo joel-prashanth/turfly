@@ -2,8 +2,15 @@ const turfService = require("./turf.service");
 
 const createTurf = async (req, res) => {
   try {
-    const { name, description, location, pricePerHour, sport, imageUrl } =
-      req.body;
+    const {
+      name,
+      description,
+      location,
+      pricePerHour,
+      sport,
+      imageUrl,
+      imagePublicId,
+    } = req.body;
 
     const ownerId = req.user.userId;
 
@@ -14,6 +21,7 @@ const createTurf = async (req, res) => {
       pricePerHour,
       sport,
       imageUrl,
+      imagePublicId,
       ownerId,
     });
 
@@ -92,28 +100,6 @@ const getTurfById = async (req, res) => {
   }
 };
 
-const deleteTurfController = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const ownerId = req.user.userId;
-
-    const result = await turfService.deleteTurf(id, ownerId);
-
-    return res.status(200).json({
-      success: true,
-      message: result.message,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
 const updateTurfController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -137,13 +123,33 @@ const updateTurfController = async (req, res) => {
   }
 };
 
+const deleteTurfController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const ownerId = req.user.userId;
+
+    const result = await turfService.deleteTurf(id, ownerId);
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createTurf,
   getMyTurfs,
   getAllTurfs,
   getTurfById,
-  deleteTurfController,
   updateTurfController,
-  getTurfById,
   deleteTurfController,
 };

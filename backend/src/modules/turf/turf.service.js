@@ -1,4 +1,5 @@
 const prisma = require("../../config/prisma");
+const uploadService = require("../upload/upload.service");
 
 const createTurf = async (turfData) => {
   const {
@@ -99,6 +100,15 @@ const deleteTurf = async (turfId, ownerId) => {
     throw new Error("This turf has active bookings and cannot be deleted.");
   }
 
+  // Delete Cloudinary image first
+  if (turf.imagePublicId) {
+    try {
+      await uploadService.deleteImage(turf.imagePublicId);
+    } catch (error) {
+      console.error("Failed to delete Cloudinary image:", error);
+    }
+  }
+
   await prisma.$transaction([
     prisma.slot.deleteMany({
       where: {
@@ -117,7 +127,6 @@ const deleteTurf = async (turfId, ownerId) => {
     message: "Turf deleted successfully.",
   };
 };
-
 const updateTurf = async (turfId, ownerId, turfData) => {
   const turf = await prisma.turf.findUnique({
     where: {
@@ -140,6 +149,7 @@ const updateTurf = async (turfId, ownerId, turfData) => {
     pricePerHour,
     sport,
     imageUrl,
+    imagePublicId,
     isActive,
   } = turfData;
 
@@ -150,6 +160,8 @@ const updateTurf = async (turfId, ownerId, turfData) => {
   if (Number(pricePerHour) <= 0) {
     throw new Error("Price per hour must be greater than 0.");
   }
+
+  const oldPublicId = turf.imagePublicId;
 
   const updatedTurf = await prisma.turf.update({
     where: {
@@ -162,9 +174,21 @@ const updateTurf = async (turfId, ownerId, turfData) => {
       pricePerHour: Number(pricePerHour),
       sport,
       imageUrl,
+      imagePublicId,
       isActive,
     },
   });
+
+  const imageChanged =
+    oldPublicId && imagePublicId && oldPublicId !== imagePublicId;
+
+  if (imageChanged) {
+    try {
+      await uploadService.deleteImage(oldPublicId);
+    } catch (error) {
+      console.error("Failed to delete old Cloudinary image:", error);
+    }
+  }
 
   return updatedTurf;
 };
