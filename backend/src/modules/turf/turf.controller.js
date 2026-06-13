@@ -63,7 +63,7 @@ const getMyTurfs = async (req, res) => {
 
 const getAllTurfs = async (req, res) => {
   try {
-    const turfs = await turfService.getAllTurfs();
+    const turfs = await turfService.getAllTurfs(req.query);
 
     return res.status(200).json({
       success: true,
@@ -79,7 +79,6 @@ const getAllTurfs = async (req, res) => {
     });
   }
 };
-
 const getTurfById = async (req, res) => {
   try {
     const { id } = req.params;

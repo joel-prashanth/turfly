@@ -46,14 +46,85 @@ const getMyTurfs = async (ownerId) => {
   });
 };
 
-const getAllTurfs = async () => {
+const getAllTurfs = async (filters = {}) => {
+  const { search, location, sport, minPrice, maxPrice, sort } = filters;
+
+  const where = {
+    isActive: true,
+  };
+
+  if (sport) {
+    where.sport = sport;
+  }
+
+  if (location) {
+    where.location = {
+      contains: location,
+      mode: "insensitive",
+    };
+  }
+
+  if (search) {
+    where.OR = [
+      {
+        name: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        location: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+    ];
+  }
+
+  if (minPrice || maxPrice) {
+    where.pricePerHour = {};
+
+    if (minPrice) {
+      where.pricePerHour.gte = Number(minPrice);
+    }
+
+    if (maxPrice) {
+      where.pricePerHour.lte = Number(maxPrice);
+    }
+  }
+
+  let orderBy = {
+    createdAt: "desc",
+  };
+
+  switch (sort) {
+    case "priceAsc":
+      orderBy = {
+        pricePerHour: "asc",
+      };
+      break;
+
+    case "priceDesc":
+      orderBy = {
+        pricePerHour: "desc",
+      };
+      break;
+
+    case "newest":
+      orderBy = {
+        createdAt: "desc",
+      };
+      break;
+
+    default:
+      break;
+  }
+
   return prisma.turf.findMany({
-    orderBy: {
-      createdAt: "desc",
-    },
+    where,
+    orderBy,
   });
 };
-
 const getTurfById = async (turfId) => {
   if (!turfId) {
     throw new Error("Turf id is required.");
@@ -198,8 +269,6 @@ module.exports = {
   getMyTurfs,
   getAllTurfs,
   getTurfById,
-  deleteTurf,
   updateTurf,
-  getTurfById,
   deleteTurf,
 };
