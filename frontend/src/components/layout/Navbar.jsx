@@ -63,6 +63,10 @@ function Navbar() {
       to: "/owner/dashboard",
     },
     {
+      label: "Schedule",
+      to: "/owner/schedule",
+    },
+    {
       label: "My Turfs",
       to: "/owner/turfs",
     },

@@ -21,6 +21,7 @@ import MyTurfsPage from "./pages/MyTurfsPage";
 import CreateTurfPage from "./pages/CreateTurfPage";
 import EditTurfPage from "./pages/EditTurfPage";
 import CreateSlotPage from "./pages/CreateSlotPage";
+import OwnerSchedulePage from "./pages/OwnerSchedulePage";
 
 function App() {
   return (
@@ -115,6 +116,15 @@ function App() {
             element={
               <ProtectedRoute allowedRole="OWNER">
                 <CreateSlotPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/owner/schedule"
+            element={
+              <ProtectedRoute allowedRole="OWNER">
+                <OwnerSchedulePage />
               </ProtectedRoute>
             }
           />

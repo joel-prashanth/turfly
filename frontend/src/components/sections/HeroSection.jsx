@@ -162,7 +162,7 @@ function HeroSection() {
           {/* Live Turf Count */}
           <div className="absolute bottom-10 right-0 rounded-2xl border border-slate-100 bg-white p-5 shadow-xl">
             <p className="text-3xl font-bold text-green-600">
-              <AnimatedCounter end={stats.turfs} />
+              <AnimatedCounter end={stats.turfs} suffix="+" />
             </p>
 
             <p className="mt-1 text-sm text-slate-500">Premium Turfs</p>

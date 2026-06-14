@@ -11,3 +11,13 @@ export const createSlot = async (slotData) => {
 
   return response.data;
 };
+
+export const getOwnerSchedule = async (date) => {
+  const response = await api.get("/slots/schedule", {
+    params: {
+      date,
+    },
+  });
+
+  return response.data;
+};

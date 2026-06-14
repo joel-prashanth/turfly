@@ -1,49 +1,58 @@
 import { useEffect, useRef, useState } from "react";
 
-function AnimatedCounter({ end, duration = 1500, suffix = "+" }) {
+function AnimatedCounter({
+  end = 0,
+  duration = 1200,
+  prefix = "",
+  suffix = "",
+}) {
   const [count, setCount] = useState(0);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  const ref = useRef(null);
+  const frameRef = useRef(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting || hasAnimated) return;
+    const target = Number(end);
 
-        setHasAnimated(true);
-
-        let start = 0;
-        const increment = end / (duration / 16);
-
-        const timer = setInterval(() => {
-          start += increment;
-
-          if (start >= end) {
-            setCount(end);
-            clearInterval(timer);
-          } else {
-            setCount(Math.floor(start));
-          }
-        }, 16);
-
-        return () => clearInterval(timer);
-      },
-      {
-        threshold: 0.4,
-      },
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
+    if (!Number.isFinite(target)) {
+      setCount(0);
+      return;
     }
 
-    return () => observer.disconnect();
-  }, [duration, end, hasAnimated]);
+    let startTime = null;
+
+    const animate = (timestamp) => {
+      if (startTime === null) {
+        startTime = timestamp;
+      }
+
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+
+      setCount(Math.floor(progress * target));
+
+      if (progress < 1) {
+        frameRef.current = requestAnimationFrame(animate);
+      } else {
+        setCount(target);
+      }
+    };
+
+    frameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, [end, duration]);
+
+  console.log({
+    end,
+    suffix,
+  });
 
   return (
-    <span ref={ref}>
-      {count}
+    <span>
+      {prefix}
+      {count.toLocaleString()}
       {suffix}
     </span>
   );

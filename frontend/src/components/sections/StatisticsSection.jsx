@@ -6,7 +6,7 @@ import { STAT_ITEMS } from "../../constants/stats";
 import Section from "../ui/Section";
 import SectionHeader from "../ui/SectionHeader";
 import Skeleton from "../ui/Skeleton";
-import StatCard from "../ui/StatCard";
+import PlatformStatCard from "../ui/PlatformStatCard";
 
 function StatisticsSection() {
   const [stats, setStats] = useState({
@@ -16,6 +16,7 @@ function StatisticsSection() {
     bookings: 0,
   });
   const [loading, setLoading] = useState(true);
+  console.log("Stats State:", stats);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -50,14 +51,18 @@ function StatisticsSection() {
         </div>
       ) : (
         <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
-          {STAT_ITEMS.map((item) => (
-            <StatCard
-              key={item.key}
-              icon={item.icon}
-              value={stats[item.key]}
-              label={item.label}
-            />
-          ))}
+          {STAT_ITEMS.map((item) => {
+            console.log(item.key, stats[item.key]);
+
+            return (
+              <PlatformStatCard
+                key={item.key}
+                icon={item.icon}
+                value={stats[item.key]}
+                label={item.label}
+              />
+            );
+          })}
         </div>
       )}
     </Section>
