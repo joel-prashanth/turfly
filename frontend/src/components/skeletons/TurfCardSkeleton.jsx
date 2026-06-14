@@ -1,21 +1,37 @@
 import Card from "../ui/Card";
 import Skeleton from "../ui/Skeleton";
 
-const TurfCardSkeleton = () => {
+function TurfCardSkeleton() {
   return (
-    <Card className="p-6">
-      <Skeleton className="h-8 w-2/3" />
+    <Card className="overflow-hidden border border-slate-200 bg-white">
+      {/* Image */}
+      <Skeleton className="h-60 w-full rounded-none" />
 
-      <Skeleton className="mt-5 h-5 w-1/2" />
+      <div className="p-6">
+        {/* Sport Badge */}
+        <Skeleton className="h-6 w-24 rounded-full" />
 
-      <Skeleton className="mt-3 h-5 w-1/3" />
+        {/* Status Badge */}
+        <Skeleton className="mt-5 h-6 w-20 rounded-full" />
 
-      <div className="mt-8 flex gap-3">
-        <Skeleton className="h-10 w-28 rounded-xl" />
-        <Skeleton className="h-10 w-24 rounded-xl" />
+        {/* Title */}
+        <Skeleton className="mt-6 h-8 w-3/4" />
+
+        {/* Description */}
+        <Skeleton className="mt-5 h-4 w-full" />
+        <Skeleton className="mt-3 h-4 w-5/6" />
+
+        {/* Location */}
+        <Skeleton className="mt-6 h-5 w-2/3" />
+
+        {/* Price */}
+        <Skeleton className="mt-8 h-10 w-32" />
+
+        {/* Button */}
+        <Skeleton className="mt-8 h-11 w-full rounded-xl" />
       </div>
     </Card>
   );
-};
+}
 
 export default TurfCardSkeleton;

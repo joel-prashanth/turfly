@@ -5,7 +5,7 @@ import { getMyBookings } from "../api/bookingApi";
 
 import Container from "../components/ui/Container";
 import PageHeader from "../components/ui/PageHeader";
-import Spinner from "../components/ui/Spinner";
+import BookingCardSkeleton from "../components/skeletons/BookingCardSkeleton";
 import EmptyState from "../components/ui/EmptyState";
 import Card from "../components/ui/Card";
 
@@ -82,9 +82,16 @@ export default function MyBookingsPage() {
 
   if (loading) {
     return (
-      <Container className="py-20">
-        <div className="flex justify-center">
-          <Spinner size="lg" />
+      <Container className="py-10">
+        <PageHeader
+          title="My Bookings"
+          subtitle="Manage your upcoming and past games."
+        />
+
+        <div className="space-y-6">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <BookingCardSkeleton key={index} />
+          ))}
         </div>
       </Container>
     );

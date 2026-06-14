@@ -10,9 +10,8 @@ import { createBooking } from "../api/bookingApi";
 
 import Container from "../components/ui/Container";
 import PageHeader from "../components/ui/PageHeader";
-import Spinner from "../components/ui/Spinner";
 import Card from "../components/ui/Card";
-
+import TurfDetailsSkeleton from "../components/skeletons/TurfDetailsSkeleton";
 import TurfInfo from "../components/turf/TurfInfo";
 import SlotCard from "../components/turf/SlotCard";
 import BookingConfirmationModal from "../components/booking/BookingConfirmationModal";
@@ -98,9 +97,7 @@ export default function TurfDetailsPage() {
   if (loading) {
     return (
       <Container className="py-20">
-        <div className="flex justify-center">
-          <Spinner size="lg" />
-        </div>
+        <TurfDetailsSkeleton />
       </Container>
     );
   }
