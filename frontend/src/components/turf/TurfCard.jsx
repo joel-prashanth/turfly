@@ -1,4 +1,4 @@
-import { MapPin, IndianRupee } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 import Card from "../ui/Card";
 
@@ -16,18 +16,39 @@ const FALLBACK_IMAGE =
 
 function TurfCard({ turf, actions }) {
   return (
-    <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-      <img
-        src={turf.imageUrl || FALLBACK_IMAGE}
-        alt={turf.name}
-        className="h-56 w-full object-cover"
-        onError={(e) => {
-          e.currentTarget.src = FALLBACK_IMAGE;
-        }}
-      />
+    <Card
+      className="
+        group
+        overflow-hidden
+        border
+        border-slate-200
+        transition-all
+        duration-300
+        hover:-translate-y-2
+        hover:border-green-200
+        hover:shadow-2xl
+      "
+    >
+      <div className="overflow-hidden">
+        <img
+          src={turf.imageUrl || FALLBACK_IMAGE}
+          alt={turf.name}
+          className="
+            h-60
+            w-full
+            object-cover
+            transition-transform
+            duration-500
+            group-hover:scale-105
+          "
+          onError={(e) => {
+            e.currentTarget.src = FALLBACK_IMAGE;
+          }}
+        />
+      </div>
 
       <div className="p-6">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-5 flex items-center justify-between">
           <span
             className={`rounded-full px-3 py-1 text-xs font-semibold ${
               turf.isActive
@@ -47,23 +68,35 @@ function TurfCard({ turf, actions }) {
           </span>
         </div>
 
-        <h2 className="text-3xl font-bold">{turf.name}</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+          {turf.name}
+        </h2>
 
-        <p className="mt-3 line-clamp-2 text-slate-500">
+        <p className="mt-3 line-clamp-2 leading-7 text-slate-500">
           {turf.description || "No description available."}
         </p>
 
         <div className="mt-5 flex items-center gap-2 text-slate-600">
           <MapPin size={18} />
-          {turf.location}
+          <span>{turf.location}</span>
         </div>
 
-        <div className="mt-4 flex items-center gap-2 text-xl font-bold text-green-700">
-          <IndianRupee size={20} />₹{turf.pricePerHour}/hour
+        <div className="mt-6 flex items-end justify-between">
+          <div>
+            <p className="text-3xl font-extrabold tracking-tight text-green-600">
+              ₹{turf.pricePerHour}
+            </p>
+
+            <p className="text-sm text-slate-500">
+              per hour
+            </p>
+          </div>
         </div>
 
         {actions && (
-          <div className="mt-6 border-t border-slate-200 pt-6">{actions}</div>
+          <div className="mt-6 border-t border-slate-200 pt-6">
+            {actions}
+          </div>
         )}
       </div>
     </Card>

@@ -23,6 +23,8 @@ function Button({
     secondary:
       "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
 
+    white: "bg-white text-slate-900 shadow-sm hover:bg-slate-100",
+
     danger: "bg-red-600 text-white shadow-sm hover:bg-red-700 hover:shadow-lg",
 
     ghost: "bg-transparent text-slate-700 hover:bg-slate-100",

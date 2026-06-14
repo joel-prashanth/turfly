@@ -41,7 +41,13 @@ export default function LoginPage() {
         });
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Login failed.");
+      console.error("LOGIN ERROR:", error);
+      console.error("RESPONSE:", error.response);
+      console.error("DATA:", error.response?.data);
+
+      toast.error(
+        error?.response?.data?.message || error.message || "Login failed.",
+      );
     } finally {
       setIsLoggingIn(false);
     }
