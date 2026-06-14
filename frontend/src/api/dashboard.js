@@ -5,3 +5,9 @@ export const getOwnerDashboardStats = async () => {
 
   return response.data;
 };
+
+export const getOwnerRecentBookings = async () => {
+  const response = await api.get("/dashboard/owner/recent-bookings");
+
+  return response.data;
+};
