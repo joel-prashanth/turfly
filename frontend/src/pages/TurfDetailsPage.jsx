@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -11,9 +11,18 @@ import { createBooking } from "../api/bookingApi";
 import Container from "../components/ui/Container";
 import PageHeader from "../components/ui/PageHeader";
 import Spinner from "../components/ui/Spinner";
+import Card from "../components/ui/Card";
 
 import TurfInfo from "../components/turf/TurfInfo";
 import SlotCard from "../components/turf/SlotCard";
+
+const formatGroupDate = (date) =>
+  new Date(date).toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
 export default function TurfDetailsPage() {
   const { id } = useParams();
@@ -54,6 +63,20 @@ export default function TurfDetailsPage() {
     }
   };
 
+  const groupedSlots = useMemo(() => {
+    return slots.reduce((groups, slot) => {
+      const dateKey = new Date(slot.startTime).toDateString();
+
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+
+      groups[dateKey].push(slot);
+
+      return groups;
+    }, {});
+  }, [slots]);
+
   if (loading) {
     return (
       <Container className="py-20">
@@ -77,20 +100,45 @@ export default function TurfDetailsPage() {
         subtitle="Choose a convenient time for your game."
       />
 
-      <div className="space-y-5">
-        {slots.length === 0 ? (
-          <p>No slots available.</p>
-        ) : (
-          slots.map((slot) => (
-            <SlotCard
-              key={slot.id}
-              slot={slot}
-              canBook={user?.role === "PLAYER"}
-              onBook={handleBooking}
-            />
-          ))
-        )}
-      </div>
+      {slots.length === 0 ? (
+        <Card className="rounded-2xl border border-dashed border-slate-300 p-12 text-center">
+          <h3 className="text-xl font-semibold text-slate-900">
+            No Slots Available
+          </h3>
+
+          <p className="mt-2 text-slate-500">
+            This turf doesn't have any available slots yet. Please check back
+            later.
+          </p>
+        </Card>
+      ) : (
+        <div className="space-y-10">
+          {Object.entries(groupedSlots).map(([date, daySlots]) => (
+            <section key={date}>
+              <div className="mb-5 flex items-center gap-4">
+                <div className="h-px flex-1 bg-slate-200" />
+
+                <h2 className="whitespace-nowrap text-lg font-semibold text-slate-800">
+                  {formatGroupDate(daySlots[0].startTime)}
+                </h2>
+
+                <div className="h-px flex-1 bg-slate-200" />
+              </div>
+
+              <div className="space-y-4">
+                {daySlots.map((slot) => (
+                  <SlotCard
+                    key={slot.id}
+                    slot={slot}
+                    canBook={user?.role === "PLAYER"}
+                    onBook={handleBooking}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
     </Container>
   );
 }
