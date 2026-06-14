@@ -45,7 +45,22 @@ const getMyBookings = async (playerId) => {
       playerId,
     },
     include: {
-      slot: true,
+      slot: {
+        include: {
+          turf: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              location: true,
+              sport: true,
+              pricePerHour: true,
+              imageUrl: true,
+              isActive: true,
+            },
+          },
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
