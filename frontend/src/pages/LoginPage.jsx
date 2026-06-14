@@ -36,7 +36,7 @@ export default function LoginPage() {
         });
       } else {
         toast.success(`⚽ Welcome back, ${user.name}!`);
-        navigate("/", {
+        navigate("/turfs", {
           replace: true,
         });
       }

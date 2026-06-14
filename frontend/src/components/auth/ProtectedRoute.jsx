@@ -15,7 +15,7 @@ function ProtectedRoute({ children, allowedRole }) {
 
   if (allowedRole && user.role !== allowedRole) {
     return (
-      <Navigate to={user.role === "OWNER" ? "/owner/dashboard" : "/"} replace />
+      <Navigate to={user.role === "OWNER" ? "/owner/dashboard" : "/turfs"} replace />
     );
   }
 

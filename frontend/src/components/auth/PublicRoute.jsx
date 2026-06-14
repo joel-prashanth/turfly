@@ -11,7 +11,10 @@ function PublicRoute({ children }) {
 
   if (user) {
     return (
-      <Navigate to={user.role === "OWNER" ? "/owner/dashboard" : "/"} replace />
+      <Navigate
+        to={user.role === "OWNER" ? "/owner/dashboard" : "/turfs"}
+        replace
+      />
     );
   }
 

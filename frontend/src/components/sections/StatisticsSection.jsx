@@ -9,14 +9,19 @@ import Skeleton from "../ui/Skeleton";
 import StatCard from "../ui/StatCard";
 
 function StatisticsSection() {
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({
+    turfs: 0,
+    owners: 0,
+    players: 0,
+    bookings: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await getPlatformStats();
-        setStats(response.stats);
+        const stats = await getPlatformStats();
+        setStats(stats);
       } catch (error) {
         console.error("Failed to fetch platform stats:", error);
       } finally {

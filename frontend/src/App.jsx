@@ -28,7 +28,14 @@ function App() {
       <Routes>
         {/* ================= Public ================= */}
         <Route element={<PublicLayout />}>
-          <Route path="/" element={<LandingPage />} />
+          <Route
+            path="/"
+            element={
+              <PublicRoute>
+                <LandingPage />
+              </PublicRoute>
+            }
+          />
 
           <Route path="/turfs" element={<TurfListPage />} />
 
