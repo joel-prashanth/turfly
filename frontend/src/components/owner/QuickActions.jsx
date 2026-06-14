@@ -30,14 +30,16 @@ function QuickActions() {
           title="Add Slots"
           description="Create available time slots for your customers."
           icon={<CalendarPlus size={28} />}
-          to="/owner/turfs"
+          disabled
+          badge="Coming Soon"
         />
 
         <QuickActionCard
           title="View Bookings"
-          description="Track reservations and upcoming customer bookings."
+          description="Track reservations and customer bookings."
           icon={<ClipboardList size={28} />}
-          to="/owner/bookings"
+          disabled
+          badge="Coming Soon"
         />
       </div>
     </section>
