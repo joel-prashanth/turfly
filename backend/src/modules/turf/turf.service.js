@@ -47,7 +47,7 @@ const getMyTurfs = async (ownerId) => {
 };
 
 const getAllTurfs = async (filters = {}) => {
-  const { search, location, sport, minPrice, maxPrice, sort } = filters;
+  const { search, location, sport, minPrice, maxPrice, sort, limit } = filters;
 
   const where = {
     isActive: true,
@@ -123,6 +123,9 @@ const getAllTurfs = async (filters = {}) => {
   return prisma.turf.findMany({
     where,
     orderBy,
+    ...(limit && {
+      take: Number(limit),
+    }),
   });
 };
 const getTurfById = async (turfId) => {
