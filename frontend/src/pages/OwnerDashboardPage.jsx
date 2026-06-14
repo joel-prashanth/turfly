@@ -1,12 +1,9 @@
-import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
-
 import { useAuth } from "../hooks/useAuth";
 
 import Container from "../components/ui/Container";
 import PageHeader from "../components/ui/PageHeader";
 import DashboardStats from "../components/owner/DashboardStats";
-import Button from "../components/ui/Button";
+import QuickActions from "../components/owner/QuickActions";
 
 function OwnerDashboardPage() {
   const { user } = useAuth();
@@ -20,27 +17,7 @@ function OwnerDashboardPage() {
 
       <DashboardStats />
 
-      <div className="mt-12">
-        <PageHeader
-          title="Quick Actions"
-          subtitle="Manage your business faster."
-        />
-
-        <div className="flex flex-wrap gap-4">
-          <Link to="/owner/turfs/create">
-            <Button>
-              <Plus size={18} className="mr-2" />
-              Create Turf
-            </Button>
-          </Link>
-
-          <Link to="/owner/turfs">
-            <Button variant="secondary">
-              My Turfs
-            </Button>
-          </Link>
-        </div>
-      </div>
+      <QuickActions />
     </Container>
   );
 }
