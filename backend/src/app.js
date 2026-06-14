@@ -5,6 +5,7 @@ const slotRoutes = require("./modules/slot/slot.routes");
 const bookingRoutes = require("./modules/bookings/booking.routes");
 const uploadRoutes = require("./modules/upload/upload.routes");
 const statsRoutes = require("./modules/stats/stats.routes");
+const dashboardRoutes = require("./modules/dashboard/dashboard.routes");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
@@ -23,4 +24,5 @@ app.use("/api/v1/turfs", turfRoutes);
 app.use("/api/v1/slots", slotRoutes);
 app.use("/api/v1/bookings", bookingRoutes);
 app.use("/api/v1/stats", statsRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes);
 module.exports = app;
