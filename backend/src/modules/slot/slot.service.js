@@ -28,12 +28,9 @@ const createSlot = async (slotData, ownerId) => {
     throw new Error("Invalid start time or end time");
   }
 
-  if (isNaN(start.getTime()) || isNaN(end.getTime()))
-    if (end <= start) {
-      throw new Error("endTime must be after startTime");
-    }
-
-  // overlap validation comes next
+  if (end <= start) {
+    throw new Error("End time must be after start time");
+  }
 
   const overlappingSlot = await prisma.slot.findFirst({
     where: {
@@ -51,18 +48,16 @@ const createSlot = async (slotData, ownerId) => {
     throw new Error("Slot overlaps with an existing slot");
   }
 
-  const newSlot = await prisma.slot.create({
+  return prisma.slot.create({
     data: {
       turfId,
       startTime: start,
       endTime: end,
     },
   });
-  return newSlot;
 };
 
 const getSlotsByTurfId = async (turfId) => {
-  
   const turf = await prisma.turf.findUnique({
     where: {
       id: turfId,
@@ -73,7 +68,7 @@ const getSlotsByTurfId = async (turfId) => {
     throw new Error("Turf not found");
   }
 
-  const slots = await prisma.slot.findMany({
+  return prisma.slot.findMany({
     where: {
       turfId,
     },
@@ -81,8 +76,6 @@ const getSlotsByTurfId = async (turfId) => {
       startTime: "asc",
     },
   });
-
-  return slots;
 };
 
 module.exports = {

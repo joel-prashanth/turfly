@@ -2,21 +2,17 @@ const prisma = require("../../config/prisma");
 
 const getStartOfToday = () => {
   const date = new Date();
-
   date.setHours(0, 0, 0, 0);
-
   return date;
 };
 
 const getEndOfToday = () => {
   const date = new Date();
-
   date.setHours(23, 59, 59, 999);
-
   return date;
 };
 
-const getActiveTurfs = async (ownerId) => {
+const getActiveTurfs = (ownerId) => {
   return prisma.turf.count({
     where: {
       ownerId,
@@ -25,7 +21,7 @@ const getActiveTurfs = async (ownerId) => {
   });
 };
 
-const getTodayBookings = async (ownerId) => {
+const getTodayBookings = (ownerId) => {
   return prisma.booking.count({
     where: {
       slot: {
@@ -41,7 +37,7 @@ const getTodayBookings = async (ownerId) => {
   });
 };
 
-const getUpcomingSlots = async (ownerId) => {
+const getUpcomingSlots = (ownerId) => {
   return prisma.slot.count({
     where: {
       turf: {
@@ -98,8 +94,18 @@ const getRevenue = async (ownerId) => {
   });
 
   return bookings.reduce((total, booking) => {
-    const durationInHours =
-      (booking.slot.endTime - booking.slot.startTime) / (1000 * 60 * 60);
+    const start = booking.slot.startTime.getTime();
+    const end = booking.slot.endTime.getTime();
+
+    const durationInHours = (end - start) / (1000 * 60 * 60);
+
+    // Ignore corrupt records
+    if (durationInHours <= 0) {
+      console.warn(
+        `Skipping invalid slot. Start: ${booking.slot.startTime.toISOString()}, End: ${booking.slot.endTime.toISOString()}`,
+      );
+      return total;
+    }
 
     return total + durationInHours * booking.slot.turf.pricePerHour;
   }, 0);
