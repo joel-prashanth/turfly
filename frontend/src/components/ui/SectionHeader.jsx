@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 function SectionHeader({
@@ -16,48 +17,50 @@ function SectionHeader({
   const subtitleClass = light ? "text-slate-300" : "text-slate-600";
 
   const actionClass = light
-    ? "font-semibold text-green-400 transition-colors hover:text-green-300"
-    : "font-semibold text-green-600 transition-colors hover:text-green-700";
+    ? "text-green-400 hover:text-green-300"
+    : "text-green-600 hover:text-green-700";
 
   return (
     <div
-      className={`mb-12 flex flex-col gap-6 ${
+      className={`mb-14 flex flex-col gap-8 ${
         centered
           ? "items-center text-center"
-          : "sm:flex-row sm:items-end sm:justify-between"
+          : "sm:flex-row sm:items-center sm:justify-between"
       }`}
     >
-      <div className={centered ? "max-w-3xl" : ""}>
+      <div className={centered ? "max-w-3xl" : "max-w-2xl"}>
         {eyebrow && (
           <p
-            className={`mb-3 text-sm font-semibold uppercase tracking-[0.3em] ${eyebrowClass}`}
+            className={`mb-4 text-xs font-semibold uppercase tracking-[0.35em] ${eyebrowClass}`}
           >
             {eyebrow}
           </p>
         )}
 
         <h2
-          className={`text-4xl font-bold tracking-tight md:text-5xl ${titleClass}`}
+          className={`text-3xl font-bold tracking-tight leading-tight md:text-5xl ${titleClass}`}
         >
           {title}
         </h2>
 
         {subtitle && (
-          <p className={`mt-3 max-w-2xl text-lg ${subtitleClass}`}>
+          <p className={`mt-5 text-lg leading-8 ${subtitleClass}`}>
             {subtitle}
           </p>
         )}
       </div>
 
-      {!centered && actionLabel && actionTo && (
-        <Link to={actionTo} className={actionClass}>
-          {actionLabel} →
-        </Link>
-      )}
+      {actionLabel && actionTo && (
+        <Link
+          to={actionTo}
+          className={`group inline-flex items-center gap-2 font-semibold transition-all ${actionClass}`}
+        >
+          {actionLabel}
 
-      {centered && actionLabel && actionTo && (
-        <Link to={actionTo} className={`mt-2 ${actionClass}`}>
-          {actionLabel} →
+          <ArrowRight
+            size={18}
+            className="transition-transform duration-300 group-hover:translate-x-1"
+          />
         </Link>
       )}
     </div>

@@ -35,38 +35,58 @@ function FeaturedTurfsSection() {
   return (
     <Section className="bg-slate-50">
       <SectionHeader
-        title="Featured Turfs"
-        subtitle="Discover premium sports venues loved by players across the city."
-        actionLabel="View All"
+        eyebrow="Featured Venues"
+        title="Play at the City's Best Sports Turfs"
+        subtitle="Handpicked premium venues designed for football, cricket, badminton, tennis, basketball, and more."
+        actionLabel="View All Turfs"
         actionTo="/turfs"
       />
 
-      {loading ? (
-        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <TurfCardSkeleton key={index} />
-          ))}
-        </div>
-      ) : turfs.length === 0 ? (
-        <EmptyState
-          title="No turfs available"
-          description="Featured turfs will appear here once they're added."
-        />
-      ) : (
-        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-          {turfs.map((turf) => (
-            <TurfCard
-              key={turf.id}
-              turf={turf}
-              actions={
-                <Link to={`/turfs/${turf.id}`}>
-                  <Button className="w-full">View Details</Button>
-                </Link>
-              }
+      <div className="mt-14">
+        {loading ? (
+          <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className="animate-fade-in"
+                style={{
+                  animationDelay: `${index * 120}ms`,
+                }}
+              >
+                <TurfCardSkeleton />
+              </div>
+            ))}
+          </div>
+        ) : turfs.length === 0 ? (
+          <div className="rounded-3xl border border-slate-200 bg-white py-16 shadow-sm">
+            <EmptyState
+              title="No featured turfs yet"
+              description="We're curating the best venues for you. Check back soon as new premium turfs are added."
             />
-          ))}
-        </div>
-      )}
+          </div>
+        ) : (
+          <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+            {turfs.map((turf, index) => (
+              <div
+                key={turf.id}
+                className="animate-fade-in"
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                }}
+              >
+                <TurfCard
+                  turf={turf}
+                  actions={
+                    <Link to={`/turfs/${turf.id}`}>
+                      <Button className="w-full">View Details</Button>
+                    </Link>
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </Section>
   );
 }
