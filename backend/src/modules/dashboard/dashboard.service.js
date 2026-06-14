@@ -99,11 +99,11 @@ const getRevenue = async (ownerId) => {
 
     const durationInHours = (end - start) / (1000 * 60 * 60);
 
-    // Ignore corrupt records
     if (durationInHours <= 0) {
       console.warn(
         `Skipping invalid slot. Start: ${booking.slot.startTime.toISOString()}, End: ${booking.slot.endTime.toISOString()}`,
       );
+
       return total;
     }
 
@@ -172,7 +172,66 @@ const getOwnerRecentBookings = async (ownerId) => {
   });
 };
 
+/**
+ * Returns today's slots grouped by turf.
+ * This powers the Owner Dashboard timeline.
+ */
+const getOwnerTodaySchedule = async (ownerId) => {
+  const turfs = await prisma.turf.findMany({
+    where: {
+      ownerId,
+      isActive: true,
+    },
+
+    orderBy: {
+      name: "asc",
+    },
+
+    select: {
+      id: true,
+      name: true,
+      sport: true,
+
+      slots: {
+        where: {
+          startTime: {
+            gte: getStartOfToday(),
+            lte: getEndOfToday(),
+          },
+        },
+
+        orderBy: {
+          startTime: "asc",
+        },
+
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          status: true,
+
+          booking: {
+            select: {
+              id: true,
+
+              player: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return turfs;
+};
+
 module.exports = {
   getOwnerDashboardStats,
   getOwnerRecentBookings,
+  getOwnerTodaySchedule,
 };

@@ -57,7 +57,7 @@ const createSlot = async (slotData, ownerId) => {
   });
 };
 
-const getSlotsByTurfId = async (turfId) => {
+const getSlotsByTurfId = async (turfId, ownerId) => {
   const turf = await prisma.turf.findUnique({
     where: {
       id: turfId,
@@ -68,12 +68,31 @@ const getSlotsByTurfId = async (turfId) => {
     throw new Error("Turf not found");
   }
 
+  if (turf.ownerId !== ownerId) {
+    throw new Error("You are not authorized to view these slots");
+  }
+
   return prisma.slot.findMany({
     where: {
       turfId,
     },
+
     orderBy: {
       startTime: "asc",
+    },
+
+    include: {
+      booking: {
+        include: {
+          player: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+            },
+          },
+        },
+      },
     },
   });
 };

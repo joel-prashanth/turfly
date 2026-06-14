@@ -4,15 +4,16 @@ const createSlot = async (req, res) => {
   try {
     const { turfId, startTime, endTime } = req.body;
 
-    const ownerId = req.user.userId;
+    const ownerId = req.user.id;
 
-    const slotData = {
-      turfId,
-      startTime,
-      endTime,
-    };
-
-    const slot = await slotService.createSlot(slotData, ownerId);
+    const slot = await slotService.createSlot(
+      {
+        turfId,
+        startTime,
+        endTime,
+      },
+      ownerId,
+    );
 
     return res.status(201).json({
       success: true,
@@ -31,11 +32,12 @@ const getSlotsByTurfId = async (req, res) => {
   try {
     const { turfId } = req.params;
 
-    const slots = await slotService.getSlotsByTurfId(turfId);
+    const ownerId = req.user.id;
+
+    const slots = await slotService.getSlotsByTurfId(turfId, ownerId);
 
     return res.status(200).json({
       success: true,
-      message: "Slots retrieved successfully",
       slots,
     });
   } catch (error) {

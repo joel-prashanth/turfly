@@ -20,11 +20,19 @@ router.get(
   authorize("OWNER"),
   dashboardController.getOwnerRecentBookings,
 );
+
 router.get(
   "/owner/analytics/revenue",
   authenticate,
   authorize("OWNER"),
   dashboardController.getRevenueAnalytics,
+);
+
+router.get(
+  "/owner/today-schedule",
+  authenticate,
+  authorize("OWNER"),
+  dashboardController.getOwnerTodaySchedule,
 );
 
 module.exports = router;
