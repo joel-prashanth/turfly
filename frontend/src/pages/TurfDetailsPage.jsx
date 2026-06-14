@@ -15,6 +15,7 @@ import Card from "../components/ui/Card";
 
 import TurfInfo from "../components/turf/TurfInfo";
 import SlotCard from "../components/turf/SlotCard";
+import BookingConfirmationModal from "../components/booking/BookingConfirmationModal";
 
 const formatGroupDate = (date) =>
   new Date(date).toLocaleDateString("en-IN", {
@@ -32,11 +33,16 @@ export default function TurfDetailsPage() {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [bookingLoading, setBookingLoading] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const turfData = await getTurfById(id);
-        const slotData = await getSlotsByTurfId(id);
+        const [turfData, slotData] = await Promise.all([
+          getTurfById(id),
+          getSlotsByTurfId(id),
+        ]);
 
         setTurf(turfData.turf);
         setSlots(slotData.slots);
@@ -50,28 +56,40 @@ export default function TurfDetailsPage() {
     fetchData();
   }, [id]);
 
-  const handleBooking = async (slotId) => {
-    try {
-      await createBooking(slotId);
+  const refreshSlots = async () => {
+    const slotData = await getSlotsByTurfId(id);
+    setSlots(slotData.slots);
+  };
 
-      const slotData = await getSlotsByTurfId(id);
-      setSlots(slotData.slots);
+  const confirmBooking = async () => {
+    if (!selectedSlot) return;
+
+    try {
+      setBookingLoading(true);
+
+      await createBooking(selectedSlot.id);
+
+      await refreshSlots();
 
       toast.success("Booking Successful 🎉");
+
+      setSelectedSlot(null);
     } catch (error) {
       toast.error(error?.response?.data?.message || "Booking failed");
+    } finally {
+      setBookingLoading(false);
     }
   };
 
   const groupedSlots = useMemo(() => {
     return slots.reduce((groups, slot) => {
-      const dateKey = new Date(slot.startTime).toDateString();
+      const key = new Date(slot.startTime).toDateString();
 
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
+      if (!groups[key]) {
+        groups[key] = [];
       }
 
-      groups[dateKey].push(slot);
+      groups[key].push(slot);
 
       return groups;
     }, {});
@@ -88,57 +106,78 @@ export default function TurfDetailsPage() {
   }
 
   if (!turf) {
-    return <Container className="py-20">Turf not found.</Container>;
+    return (
+      <Container className="py-20">
+        <Card className="p-10 text-center">
+          <h2 className="text-2xl font-bold">Turf Not Found</h2>
+
+          <p className="mt-3 text-slate-500">
+            The turf you're looking for doesn't exist or has been removed.
+          </p>
+        </Card>
+      </Container>
+    );
   }
 
   return (
-    <Container className="py-10">
-      <TurfInfo turf={turf} />
+    <>
+      <Container className="py-10">
+        <TurfInfo turf={turf} />
 
-      <PageHeader
-        title="Available Slots"
-        subtitle="Choose a convenient time for your game."
+        <PageHeader
+          title="Available Slots"
+          subtitle="Choose a convenient time for your game."
+        />
+
+        {slots.length === 0 ? (
+          <Card className="rounded-2xl border border-dashed border-slate-300 p-12 text-center">
+            <h3 className="text-xl font-semibold text-slate-900">
+              No Slots Available
+            </h3>
+
+            <p className="mt-2 text-slate-500">
+              This turf doesn't have any available slots yet. Please check back
+              later.
+            </p>
+          </Card>
+        ) : (
+          <div className="space-y-10">
+            {Object.entries(groupedSlots).map(([date, daySlots]) => (
+              <section key={date}>
+                <div className="mb-5 flex items-center gap-4">
+                  <div className="h-px flex-1 bg-slate-200" />
+
+                  <h2 className="whitespace-nowrap text-lg font-semibold text-slate-800">
+                    {formatGroupDate(daySlots[0].startTime)}
+                  </h2>
+
+                  <div className="h-px flex-1 bg-slate-200" />
+                </div>
+
+                <div className="space-y-4">
+                  {daySlots.map((slot) => (
+                    <SlotCard
+                      key={slot.id}
+                      slot={slot}
+                      canBook={user?.role === "PLAYER"}
+                      onBook={setSelectedSlot}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+      </Container>
+
+      <BookingConfirmationModal
+        open={Boolean(selectedSlot)}
+        turf={turf}
+        slot={selectedSlot}
+        loading={bookingLoading}
+        onClose={() => setSelectedSlot(null)}
+        onConfirm={confirmBooking}
       />
-
-      {slots.length === 0 ? (
-        <Card className="rounded-2xl border border-dashed border-slate-300 p-12 text-center">
-          <h3 className="text-xl font-semibold text-slate-900">
-            No Slots Available
-          </h3>
-
-          <p className="mt-2 text-slate-500">
-            This turf doesn't have any available slots yet. Please check back
-            later.
-          </p>
-        </Card>
-      ) : (
-        <div className="space-y-10">
-          {Object.entries(groupedSlots).map(([date, daySlots]) => (
-            <section key={date}>
-              <div className="mb-5 flex items-center gap-4">
-                <div className="h-px flex-1 bg-slate-200" />
-
-                <h2 className="whitespace-nowrap text-lg font-semibold text-slate-800">
-                  {formatGroupDate(daySlots[0].startTime)}
-                </h2>
-
-                <div className="h-px flex-1 bg-slate-200" />
-              </div>
-
-              <div className="space-y-4">
-                {daySlots.map((slot) => (
-                  <SlotCard
-                    key={slot.id}
-                    slot={slot}
-                    canBook={user?.role === "PLAYER"}
-                    onBook={handleBooking}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
-    </Container>
+    </>
   );
 }

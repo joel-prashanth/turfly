@@ -81,7 +81,7 @@ function SlotCard({ slot, canBook, onBook }) {
         <div className="flex justify-end">
           {isAvailable ? (
             canBook ? (
-              <Button onClick={() => onBook(slot.id)}>Book Now</Button>
+              <Button onClick={() => onBook(slot)}>Book Now</Button>
             ) : (
               <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600">
                 Players Only
