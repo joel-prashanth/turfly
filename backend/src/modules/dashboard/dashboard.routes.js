@@ -1,6 +1,7 @@
 const express = require("express");
 
 const dashboardController = require("./dashboard.controller");
+
 const authenticate = require("../../middleware/authenticate");
 const authorize = require("../../middleware/authorize");
 
@@ -11,6 +12,19 @@ router.get(
   authenticate,
   authorize("OWNER"),
   dashboardController.getOwnerDashboardStats,
+);
+
+router.get(
+  "/owner/recent-bookings",
+  authenticate,
+  authorize("OWNER"),
+  dashboardController.getOwnerRecentBookings,
+);
+router.get(
+  "/owner/analytics/revenue",
+  authenticate,
+  authorize("OWNER"),
+  dashboardController.getRevenueAnalytics,
 );
 
 module.exports = router;

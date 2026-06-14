@@ -112,19 +112,14 @@ const getRevenue = async (ownerId) => {
 };
 
 const getOwnerDashboardStats = async (ownerId) => {
-  const [
-    activeTurfs,
-    todayBookings,
-    upcomingSlots,
-    players,
-    revenue,
-  ] = await Promise.all([
-    getActiveTurfs(ownerId),
-    getTodayBookings(ownerId),
-    getUpcomingSlots(ownerId),
-    getUniquePlayers(ownerId),
-    getRevenue(ownerId),
-  ]);
+  const [activeTurfs, todayBookings, upcomingSlots, players, revenue] =
+    await Promise.all([
+      getActiveTurfs(ownerId),
+      getTodayBookings(ownerId),
+      getUpcomingSlots(ownerId),
+      getUniquePlayers(ownerId),
+      getRevenue(ownerId),
+    ]);
 
   return {
     activeTurfs,
@@ -135,6 +130,49 @@ const getOwnerDashboardStats = async (ownerId) => {
   };
 };
 
+const getOwnerRecentBookings = async (ownerId) => {
+  return prisma.booking.findMany({
+    where: {
+      slot: {
+        turf: {
+          ownerId,
+        },
+      },
+    },
+
+    take: 5,
+
+    orderBy: {
+      createdAt: "desc",
+    },
+
+    include: {
+      player: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+
+      slot: {
+        select: {
+          startTime: true,
+          endTime: true,
+
+          turf: {
+            select: {
+              id: true,
+              name: true,
+              sport: true,
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
 module.exports = {
   getOwnerDashboardStats,
+  getOwnerRecentBookings,
 };
