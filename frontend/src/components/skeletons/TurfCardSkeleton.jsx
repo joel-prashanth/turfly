@@ -3,7 +3,10 @@ import Skeleton from "../ui/Skeleton";
 
 function TurfCardSkeleton() {
   return (
-    <Card className="overflow-hidden border border-slate-200 bg-white">
+    <Card
+      className="overflow-hidden border border-slate-200 bg-white"
+      hover={false}
+    >
       {/* Image */}
       <Skeleton className="h-60 w-full rounded-none" />
 

@@ -16,7 +16,6 @@ function StatisticsSection() {
     bookings: 0,
   });
   const [loading, setLoading] = useState(true);
-  console.log("Stats State:", stats);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -52,7 +51,7 @@ function StatisticsSection() {
       ) : (
         <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
           {STAT_ITEMS.map((item) => {
-            console.log(item.key, stats[item.key]);
+            
 
             return (
               <PlatformStatCard

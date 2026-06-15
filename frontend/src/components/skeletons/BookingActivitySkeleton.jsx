@@ -4,7 +4,7 @@ function BookingActivitySkeleton() {
   return (
     <div className="space-y-4">
       {Array.from({ length: 3 }).map((_, index) => (
-        <Card key={index} className="animate-pulse p-5">
+        <Card key={index} className="animate-pulse p-5" hover={false}>
           <div className="h-5 w-40 rounded bg-slate-200" />
 
           <div className="mt-3 h-4 w-56 rounded bg-slate-200" />

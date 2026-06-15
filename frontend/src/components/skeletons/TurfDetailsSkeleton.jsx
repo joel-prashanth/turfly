@@ -5,7 +5,7 @@ function TurfDetailsSkeleton() {
   return (
     <div className="space-y-10">
       {/* Hero */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden" hover={false}>
         <Skeleton className="h-72 w-full rounded-none lg:h-[460px]" />
 
         <div className="p-8">
@@ -24,7 +24,7 @@ function TurfDetailsSkeleton() {
       {/* Slots */}
       <div className="space-y-6">
         {Array.from({ length: 3 }).map((_, index) => (
-          <Card key={index} className="p-6">
+          <Card key={index} className="p-6" hover={false}>
             <Skeleton className="h-6 w-36 rounded-full" />
 
             <Skeleton className="mt-5 h-8 w-72" />

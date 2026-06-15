@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 const Modal = ({
   open,
@@ -18,20 +19,20 @@ const Modal = ({
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
     document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open, closeOnEscape, onClose]);
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4"
       onClick={() => {
         if (closeOnBackdrop) {
           onClose?.();
@@ -41,21 +42,22 @@ const Modal = ({
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
+        aria-labelledby={title ? "modal-title" : undefined}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-2xl bg-white border border-gray-200 shadow-2xl p-6 animate-in fade-in zoom-in duration-200"
+        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
       >
         {title && (
-          <h2 id="modal-title" className="text-xl font-semibold text-gray-900">
+          <h2 id="modal-title" className="text-xl font-semibold text-slate-900">
             {title}
           </h2>
         )}
 
-        <div className="mt-4">{children}</div>
+        <div className={title ? "mt-4" : ""}>{children}</div>
 
         {footer && <div className="mt-8 flex justify-end gap-3">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

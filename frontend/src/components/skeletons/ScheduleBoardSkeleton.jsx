@@ -5,7 +5,7 @@ function ScheduleBoardSkeleton() {
   return (
     <div className="space-y-8">
       {[1, 2, 3].map((item) => (
-        <Card key={item} className="overflow-hidden p-0">
+        <Card key={item} className="overflow-hidden p-0" hover={false}>
           <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
             <Skeleton className="h-6 w-56" />
             <Skeleton className="mt-3 h-4 w-28" />

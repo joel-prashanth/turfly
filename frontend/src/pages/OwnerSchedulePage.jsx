@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -31,37 +31,42 @@ function OwnerSchedulePage() {
 
   const heading = useMemo(() => formatHeading(selectedDate), [selectedDate]);
 
+  const fetchSchedule = useCallback(
+    async (showSkeleton = false) => {
+      try {
+        if (showSkeleton) {
+          setLoading(true);
+        }
+
+        const response = await getOwnerSchedule(formatDateForApi(selectedDate));
+
+        setSchedule(response.data.schedule);
+      } catch (error) {
+        console.error(error);
+
+        toast.error(error.response?.data?.message || "Failed to load schedule");
+      } finally {
+        if (showSkeleton) {
+          setLoading(false);
+        }
+      }
+    },
+    [selectedDate],
+  );
+
   useEffect(() => {
-    fetchSchedule();
-  }, [selectedDate]);
-
-  const fetchSchedule = async () => {
-    try {
-      setLoading(true);
-
-      const response = await getOwnerSchedule(formatDateForApi(selectedDate));
-
-      setSchedule(response.data.schedule);
-    } catch (error) {
-      console.error(error);
-
-      toast.error(error.response?.data?.message || "Failed to load schedule");
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchSchedule(true);
+  }, [fetchSchedule]);
 
   const previousDay = () => {
     const date = new Date(selectedDate);
     date.setDate(date.getDate() - 1);
-
     setSelectedDate(date);
   };
 
   const nextDay = () => {
     const date = new Date(selectedDate);
     date.setDate(date.getDate() + 1);
-
     setSelectedDate(date);
   };
 
@@ -103,7 +108,7 @@ function OwnerSchedulePage() {
       {loading ? (
         <ScheduleBoardSkeleton />
       ) : (
-        <ScheduleBoard schedule={schedule} />
+        <ScheduleBoard schedule={schedule} refreshSchedule={fetchSchedule} />
       )}
     </Container>
   );

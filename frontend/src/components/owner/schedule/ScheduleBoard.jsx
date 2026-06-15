@@ -3,7 +3,7 @@ import { CalendarDays } from "lucide-react";
 import EmptyState from "../../ui/EmptyState";
 import TurfScheduleCard from "./TurfScheduleCard";
 
-function ScheduleBoard({ schedule }) {
+function ScheduleBoard({ schedule, refreshSchedule }) {
   const hasSlots = schedule.some((turf) => turf.slots.length > 0);
 
   if (!schedule.length) {
@@ -32,6 +32,7 @@ function ScheduleBoard({ schedule }) {
         <TurfScheduleCard
           key={turf.id}
           turf={turf}
+          refreshSchedule={refreshSchedule}
         />
       ))}
     </div>

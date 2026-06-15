@@ -3,7 +3,7 @@ import Skeleton from "../ui/Skeleton";
 
 function BookingCardSkeleton() {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden" hover={false}>
       <div className="grid lg:grid-cols-[280px_1fr]">
         <Skeleton className="h-60 w-full rounded-none" />
 

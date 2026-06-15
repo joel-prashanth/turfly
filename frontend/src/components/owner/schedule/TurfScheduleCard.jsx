@@ -5,9 +5,9 @@ import EmptyState from "../../ui/EmptyState";
 
 import SlotRow from "./SlotRow";
 
-function TurfScheduleCard({ turf }) {
+function TurfScheduleCard({ turf, refreshSchedule }) {
   return (
-    <Card className="overflow-hidden p-0">
+    <Card className="relative overflow-visible p-0">
       <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
@@ -35,7 +35,11 @@ function TurfScheduleCard({ turf }) {
       ) : (
         <div className="divide-y divide-slate-100">
           {turf.slots.map((slot) => (
-            <SlotRow key={slot.id} slot={slot} />
+            <SlotRow
+              key={slot.id}
+              slot={slot}
+              refreshSchedule={refreshSchedule}
+            />
           ))}
         </div>
       )}

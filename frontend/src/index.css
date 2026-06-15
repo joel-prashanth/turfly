@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+/* Reserve scrollbar space to prevent layout shift */
+html {
+  scrollbar-gutter: stable;
+}

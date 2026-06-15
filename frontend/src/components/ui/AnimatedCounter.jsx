@@ -44,10 +44,7 @@ function AnimatedCounter({
     };
   }, [end, duration]);
 
-  console.log({
-    end,
-    suffix,
-  });
+
 
   return (
     <span>

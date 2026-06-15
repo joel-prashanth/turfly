@@ -4,9 +4,9 @@ function Card({ children, className, hover = true, ...props }) {
   return (
     <div
       className={clsx(
-        "rounded-2xl bg-white border border-slate-200 shadow-sm",
+        "rounded-2xl border border-slate-200 bg-white shadow-sm",
         hover &&
-          "transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
+          "relative z-0 transition-all duration-300 hover:z-20 hover:-translate-y-1 hover:shadow-xl",
         className,
       )}
       {...props}
