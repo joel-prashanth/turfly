@@ -1,5 +1,6 @@
 import { CalendarDays, Clock, IndianRupee, MapPin } from "lucide-react";
 
+import Button from "../ui/Button";
 import Card from "../ui/Card";
 
 const sportColors = {
@@ -14,6 +15,7 @@ const sportColors = {
 const statusColors = {
   CONFIRMED: "bg-green-100 text-green-700",
   PENDING: "bg-yellow-100 text-yellow-700",
+  COMPLETED: "bg-slate-100 text-slate-700",
   CANCELLED: "bg-red-100 text-red-700",
 };
 
@@ -34,11 +36,17 @@ const formatTime = (date) =>
     minute: "2-digit",
   });
 
-function BookingCard({ booking }) {
+function BookingCard({ booking, onCancel }) {
   const turf = booking.slot.turf;
 
+  const canCancel = booking.status === "CONFIRMED";
+
   return (
-    <Card className="overflow-hidden border border-slate-200 transition-all duration-300 hover:shadow-xl hover:border-green-200">
+    <Card
+      className={`overflow-hidden border border-slate-200 transition-all duration-300 hover:border-green-200 hover:shadow-xl ${
+        booking.status !== "CONFIRMED" ? "opacity-70" : ""
+      }`}
+    >
       <div className="grid lg:grid-cols-[280px_1fr]">
         <img
           src={turf.imageUrl || FALLBACK_IMAGE}
@@ -67,18 +75,20 @@ function BookingCard({ booking }) {
               <div className="mt-5 space-y-3 text-slate-600">
                 <div className="flex items-center gap-2">
                   <MapPin size={18} />
-                  {turf.location}
+                  <span>{turf.location}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <CalendarDays size={18} />
-                  {formatDate(booking.slot.startTime)}
+                  <span>{formatDate(booking.slot.startTime)}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Clock size={18} />
-                  {formatTime(booking.slot.startTime)} –{" "}
-                  {formatTime(booking.slot.endTime)}
+                  <span>
+                    {formatTime(booking.slot.startTime)} –{" "}
+                    {formatTime(booking.slot.endTime)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -95,8 +105,19 @@ function BookingCard({ booking }) {
                   statusColors[booking.status]
                 }`}
               >
-                {booking.status}
+                {booking.status.charAt(0) +
+                  booking.status.slice(1).toLowerCase()}
               </span>
+
+              {canCancel && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => onCancel(booking)}
+                >
+                  Cancel Booking
+                </Button>
+              )}
             </div>
           </div>
         </div>

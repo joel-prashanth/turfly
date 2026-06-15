@@ -16,6 +16,7 @@ function RegisterPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
     role: "PLAYER",
@@ -23,6 +24,17 @@ function RegisterPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "phone") {
+      const numericValue = value.replace(/\D/g, "").slice(0, 10);
+
+      setFormData((prev) => ({
+        ...prev,
+        phone: numericValue,
+      }));
+
+      return;
+    }
 
     setFormData((prev) => ({
       ...prev,
@@ -41,11 +53,19 @@ function RegisterPage() {
     e.preventDefault();
 
     if (
-      !formData.name.trim() ||
-      !formData.email.trim() ||
-      !formData.password.trim()
+      (!formData.name.trim() ||
+        !formData.email.trim() ||
+        !formData.phone.trim(),
+      !formData.password.trim())
     ) {
       toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    const phoneRegex = /^[6-9]\d{9}$/;
+
+    if (!phoneRegex.test(formData.phone)) {
+      toast.error("Please enter a valid 10-digit mobile number.");
       return;
     }
 
@@ -65,6 +85,7 @@ function RegisterPage() {
       await register({
         name: formData.name,
         email: formData.email,
+        phone: formData.phone,
         password: formData.password,
         role: formData.role,
       });
@@ -73,9 +94,7 @@ function RegisterPage() {
 
       navigate("/login");
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Registration failed."
-      );
+      toast.error(error?.response?.data?.message || "Registration failed.");
     } finally {
       setIsRegistering(false);
     }
@@ -108,6 +127,18 @@ function RegisterPage() {
             placeholder="john@example.com"
             autoComplete="email"
             value={formData.email}
+            onChange={handleChange}
+          />
+
+          <Input
+            label="Phone Number"
+            type="tel"
+            name="phone"
+            placeholder="9876543210"
+            inputMode="numeric"
+            maxLength={10}
+            autoComplete="tel"
+            value={formData.phone}
             onChange={handleChange}
           />
 
@@ -175,11 +206,7 @@ function RegisterPage() {
             </div>
           </div>
 
-          <Button
-            type="submit"
-            loading={isRegistering}
-            className="w-full"
-          >
+          <Button type="submit" loading={isRegistering} className="w-full">
             Create Account
           </Button>
         </form>

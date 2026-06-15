@@ -56,29 +56,37 @@ export default function TurfDetailsPage() {
   }, [id]);
 
   const refreshSlots = async () => {
-    const slotData = await getSlotsByTurfId(id);
-    setSlots(slotData.slots);
-  };
-
-  const confirmBooking = async () => {
-    if (!selectedSlot) return;
-
     try {
-      setBookingLoading(true);
-
-      await createBooking(selectedSlot.id);
-
-      await refreshSlots();
-
-      toast.success("Booking Successful 🎉");
-
-      setSelectedSlot(null);
-    } catch (error) {
-      toast.error(error?.response?.data?.message || "Booking failed");
-    } finally {
-      setBookingLoading(false);
+      const slotData = await getSlotsByTurfId(id);
+      setSlots(slotData.slots);
+    } catch {
+      toast.error("Failed to refresh slots.");
     }
   };
+
+ const confirmBooking = async () => {
+  if (!selectedSlot) return;
+
+  try {
+    setBookingLoading(true);
+
+    await createBooking(selectedSlot.id);
+
+    toast.success("Booking successful 🎉");
+  } catch (error) {
+    toast.error(
+      error?.response?.data?.message || "Booking failed."
+    );
+  } finally {
+    // Always close the modal.
+    setSelectedSlot(null);
+
+    // Always refresh slots.
+    await refreshSlots();
+
+    setBookingLoading(false);
+  }
+};
 
   const groupedSlots = useMemo(() => {
     return slots.reduce((groups, slot) => {

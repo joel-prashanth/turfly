@@ -22,6 +22,7 @@ import CreateTurfPage from "./pages/CreateTurfPage";
 import EditTurfPage from "./pages/EditTurfPage";
 import CreateSlotPage from "./pages/CreateSlotPage";
 import OwnerSchedulePage from "./pages/OwnerSchedulePage";
+import OwnerBookingsPage from "./pages/OwnerBookingsPage";
 
 function App() {
   return (
@@ -129,6 +130,15 @@ function App() {
             }
           />
         </Route>
+
+        <Route
+          path="/owner/bookings"
+          element={
+            <ProtectedRoute allowedRole="OWNER">
+              <OwnerBookingsPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

@@ -72,7 +72,7 @@ function MyTurfsPage() {
       setTurfs((prev) => prev.filter((turf) => turf.id !== deleteModal.id));
 
       toast.success("Turf deleted successfully");
-    } catch {
+    } catch(error) {
       toast.error(error?.response?.data?.message || "Failed to delete turf");
     } finally {
       setDeleteLoading(false);

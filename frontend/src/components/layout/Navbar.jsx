@@ -70,6 +70,10 @@ function Navbar() {
       label: "My Turfs",
       to: "/owner/turfs",
     },
+    {
+      label: "Bookings",
+      to: "/owner/bookings",
+    },
   ];
 
   const navigation = !isAuthenticated
