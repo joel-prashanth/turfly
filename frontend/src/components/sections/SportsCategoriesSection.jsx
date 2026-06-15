@@ -34,7 +34,7 @@ function SportsCategoriesSection() {
       </div>
 
       <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {SPORTS.map((sport) => (
+        {SPORTS.map(() => (
           <SportCard key={sport.id} sport={sport} onClick={handleSportClick} />
         ))}
       </div>

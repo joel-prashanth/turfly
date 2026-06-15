@@ -40,7 +40,7 @@ function MyTurfsPage() {
     try {
       const data = await getMyTurfs();
       setTurfs(data.turfs);
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch your turfs");
     } finally {
       setLoading(false);
@@ -72,7 +72,7 @@ function MyTurfsPage() {
       setTurfs((prev) => prev.filter((turf) => turf.id !== deleteModal.id));
 
       toast.success("Turf deleted successfully");
-    } catch (error) {
+    } catch {
       toast.error(error?.response?.data?.message || "Failed to delete turf");
     } finally {
       setDeleteLoading(false);
