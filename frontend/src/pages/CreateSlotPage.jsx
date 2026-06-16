@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import Container from "../components/ui/Container";
 import PageHeader from "../components/ui/PageHeader";
 
-import CreateSlotForm from "../components/sections/CreateSlotForm/CreateSlotForm";
+import SlotForm from "../components/sections/SlotForm/SlotForm";
 
 function CreateSlotPage() {
   const { turfId } = useParams();
@@ -12,11 +12,11 @@ function CreateSlotPage() {
     <Container className="py-10">
       <PageHeader
         title="Create Slot"
-        subtitle="Schedule an available time for players to book."
+        subtitle="Calendar an available time for players to book."
       />
 
       <div className="mt-8">
-        <CreateSlotForm turfId={turfId} />
+        <SlotForm turfId={turfId} />
       </div>
     </Container>
   );

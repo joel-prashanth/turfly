@@ -1,9 +1,9 @@
 import { CalendarDays } from "lucide-react";
 
 import EmptyState from "../../ui/EmptyState";
-import TurfScheduleCard from "./TurfScheduleCard";
+import TurfCalendarCard from "./TurfCalendarCard";
 
-function ScheduleBoard({ schedule, refreshSchedule }) {
+function CalendarBoard({ schedule }) {
   const hasSlots = schedule.some((turf) => turf.slots.length > 0);
 
   if (!schedule.length) {
@@ -29,14 +29,10 @@ function ScheduleBoard({ schedule, refreshSchedule }) {
   return (
     <div className="space-y-8">
       {schedule.map((turf) => (
-        <TurfScheduleCard
-          key={turf.id}
-          turf={turf}
-          refreshSchedule={refreshSchedule}
-        />
+        <TurfCalendarCard key={turf.id} turf={turf} />
       ))}
     </div>
   );
 }
 
-export default ScheduleBoard;
+export default CalendarBoard;

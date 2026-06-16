@@ -1,7 +1,7 @@
 import Card from "../ui/Card";
 import Skeleton from "../ui/Skeleton";
 
-function ScheduleBoardSkeleton() {
+function CalendarBoardSkeleton() {
   return (
     <div className="space-y-8">
       {[1, 2, 3].map((item) => (
@@ -36,4 +36,4 @@ function ScheduleBoardSkeleton() {
   );
 }
 
-export default ScheduleBoardSkeleton;
+export default CalendarBoardSkeleton;

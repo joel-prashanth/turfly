@@ -63,8 +63,8 @@ function Navbar() {
       to: "/owner/dashboard",
     },
     {
-      label: "Schedule",
-      to: "/owner/schedule",
+      label: "Calendar",
+      to: "/owner/calendar",
     },
     {
       label: "My Turfs",

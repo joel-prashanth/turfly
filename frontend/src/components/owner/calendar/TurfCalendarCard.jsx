@@ -3,9 +3,9 @@ import { CalendarX2 } from "lucide-react";
 import Card from "../../ui/Card";
 import EmptyState from "../../ui/EmptyState";
 
-import SlotRow from "./SlotRow";
+import CalendarSlotRow from "./CalendarSlotRow";
 
-function TurfScheduleCard({ turf, refreshSchedule }) {
+function TurfCalendarCard({ turf }) {
   return (
     <Card className="relative overflow-visible p-0">
       <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
@@ -35,11 +35,7 @@ function TurfScheduleCard({ turf, refreshSchedule }) {
       ) : (
         <div className="divide-y divide-slate-100">
           {turf.slots.map((slot) => (
-            <SlotRow
-              key={slot.id}
-              slot={slot}
-              refreshSchedule={refreshSchedule}
-            />
+            <CalendarSlotRow key={slot.id} slot={slot} />
           ))}
         </div>
       )}
@@ -47,4 +43,4 @@ function TurfScheduleCard({ turf, refreshSchedule }) {
   );
 }
 
-export default TurfScheduleCard;
+export default TurfCalendarCard;

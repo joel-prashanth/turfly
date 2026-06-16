@@ -72,7 +72,7 @@ function MyTurfsPage() {
       setTurfs((prev) => prev.filter((turf) => turf.id !== deleteModal.id));
 
       toast.success("Turf deleted successfully");
-    } catch(error) {
+    } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to delete turf");
     } finally {
       setDeleteLoading(false);
@@ -151,17 +151,17 @@ function MyTurfsPage() {
               turf={turf}
               actions={
                 <div className="flex flex-wrap gap-3">
-                  <Link to={`/owner/turfs/${turf.id}/slots/create`}>
+                  <Link to={`/owner/turfs/${turf.id}/slots`}>
                     <Button>
                       <CalendarDays size={18} className="mr-2" />
-                      Create Slot
+                      Manage Slots
                     </Button>
                   </Link>
 
                   <Link to={`/owner/turfs/${turf.id}/edit`}>
                     <Button variant="secondary">
                       <Pencil size={18} className="mr-2" />
-                      Edit
+                      Edit Turf
                     </Button>
                   </Link>
 
@@ -170,7 +170,7 @@ function MyTurfsPage() {
                     onClick={() => handleDelete(turf.id, turf.name)}
                   >
                     <Trash2 size={18} className="mr-2" />
-                    Delete
+                    Delete Turf
                   </Button>
                 </div>
               }

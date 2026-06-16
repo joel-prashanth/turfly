@@ -9,7 +9,7 @@ import Input from "../../ui/Input";
 
 import { createSlot } from "../../../api/slotApi";
 
-function CreateSlotForm({ turfId }) {
+function SlotForm({ turfId, onSuccess }) {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -44,6 +44,12 @@ function CreateSlotForm({ turfId }) {
       });
 
       toast.success("Slot created successfully!");
+
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate("/owner/turfs");
+      }
 
       navigate("/owner/turfs");
     } catch (error) {
@@ -103,4 +109,4 @@ function CreateSlotForm({ turfId }) {
   );
 }
 
-export default CreateSlotForm;
+export default SlotForm;

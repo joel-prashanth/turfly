@@ -6,10 +6,10 @@ import Container from "../components/ui/Container";
 import PageHeader from "../components/ui/PageHeader";
 import Button from "../components/ui/Button";
 
-import ScheduleBoard from "../components/owner/schedule/ScheduleBoard";
-import ScheduleBoardSkeleton from "../components/skeletons/ScheduleBoardSkeleton";
+import CalendarBoard from "../components/owner/calendar/CalendarBoard";
+import CalendarBoardSkeleton from "../components/skeletons/CalendarBoardSkeleton";
 
-import { getOwnerSchedule } from "../api/slotApi";
+import { getOwnerCalendar } from "../api/slotApi";
 
 const formatDateForApi = (date) => {
   return date.toISOString().split("T")[0];
@@ -24,7 +24,7 @@ const formatHeading = (date) => {
   });
 };
 
-function OwnerSchedulePage() {
+function OwnerCalendarPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ function OwnerSchedulePage() {
           setLoading(true);
         }
 
-        const response = await getOwnerSchedule(formatDateForApi(selectedDate));
+        const response = await getOwnerCalendar(formatDateForApi(selectedDate));
 
         setSchedule(response.data.schedule);
       } catch (error) {
@@ -77,7 +77,7 @@ function OwnerSchedulePage() {
   return (
     <Container className="py-10">
       <PageHeader
-        title="Schedule"
+        title="Calendar"
         subtitle="View and manage your daily operations."
       />
 
@@ -106,12 +106,12 @@ function OwnerSchedulePage() {
       </div>
 
       {loading ? (
-        <ScheduleBoardSkeleton />
+        <CalendarBoardSkeleton />
       ) : (
-        <ScheduleBoard schedule={schedule} refreshSchedule={fetchSchedule} />
+        <CalendarBoard schedule={schedule} />
       )}
     </Container>
   );
 }
 
-export default OwnerSchedulePage;
+export default OwnerCalendarPage;

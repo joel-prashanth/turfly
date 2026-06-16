@@ -12,7 +12,7 @@ export const getSlotsByTurfId = async (turfId) => {
   return response.data;
 };
 
-export const getOwnerSchedule = async (date) => {
+export const getOwnerCalendar = async (date) => {
   const response = await api.get("/slots/schedule", {
     params: { date },
   });

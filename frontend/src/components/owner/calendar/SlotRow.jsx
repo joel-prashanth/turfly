@@ -25,7 +25,7 @@ const formatTime = (date) =>
     minute: "2-digit",
   });
 
-function SlotRow({ slot, refreshSchedule }) {
+function SlotRow({ slot, refreshSlots }) {
   const isBooked = slot.status === "BOOKED";
   const isBlocked = slot.status === "BLOCKED";
 
@@ -104,7 +104,7 @@ function SlotRow({ slot, refreshSchedule }) {
 
       closeDialog();
 
-      await refreshSchedule();
+      await refreshSlots();
     } catch (error) {
       console.error(error);
 

@@ -21,8 +21,9 @@ import MyTurfsPage from "./pages/MyTurfsPage";
 import CreateTurfPage from "./pages/CreateTurfPage";
 import EditTurfPage from "./pages/EditTurfPage";
 import CreateSlotPage from "./pages/CreateSlotPage";
-import OwnerSchedulePage from "./pages/OwnerSchedulePage";
+import OwnerCalendarPage from "./pages/OwnerCalendarPage";
 import OwnerBookingsPage from "./pages/OwnerBookingsPage";
+import ManageSlotsPage from "./pages/ManageSlotsPage";
 
 function App() {
   return (
@@ -122,10 +123,19 @@ function App() {
           />
 
           <Route
-            path="/owner/schedule"
+            path="/owner/turfs/:turfId/slots"
             element={
               <ProtectedRoute allowedRole="OWNER">
-                <OwnerSchedulePage />
+                <ManageSlotsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/owner/calendar"
+            element={
+              <ProtectedRoute allowedRole="OWNER">
+                <OwnerCalendarPage />
               </ProtectedRoute>
             }
           />
