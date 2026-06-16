@@ -66,9 +66,9 @@ const getRevenueAnalytics = async (req, res) => {
   }
 };
 
-const getOwnerTodaySchedule = async (req, res) => {
+const getOwnerTodayCalendar = async (req, res) => {
   try {
-    const schedule = await dashboardService.getOwnerTodaySchedule(req.user.id);
+    const schedule = await dashboardService.getOwnerTodayCalendar(req.user.id);
 
     return res.status(200).json({
       success: true,
@@ -90,5 +90,5 @@ module.exports = {
   getOwnerDashboardStats,
   getOwnerRecentBookings,
   getRevenueAnalytics,
-  getOwnerTodaySchedule,
+  getOwnerTodayCalendar,
 };

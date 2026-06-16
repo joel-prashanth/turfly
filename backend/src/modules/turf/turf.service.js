@@ -1,5 +1,8 @@
 const prisma = require("../../config/prisma");
 const uploadService = require("../upload/upload.service");
+const {
+  releaseExpiredBookings,
+} = require("../bookings/bookingLifecycle.service");
 
 const createTurf = async (turfData) => {
   const {
@@ -128,6 +131,7 @@ const getAllTurfs = async (filters = {}) => {
     }),
   });
 };
+
 const getTurfById = async (turfId) => {
   if (!turfId) {
     throw new Error("Turf id is required.");
@@ -147,10 +151,13 @@ const getTurfById = async (turfId) => {
 };
 
 const deleteTurf = async (turfId, ownerId) => {
+  await releaseExpiredBookings();
+
   const turf = await prisma.turf.findUnique({
     where: {
       id: turfId,
     },
+
     include: {
       slots: {
         include: {
@@ -168,13 +175,25 @@ const deleteTurf = async (turfId, ownerId) => {
     throw new Error("You are not authorized to delete this turf.");
   }
 
-  const hasBookings = turf.slots.some((slot) => slot.booking !== null);
+  const now = new Date();
 
-  if (hasBookings) {
-    throw new Error("This turf has active bookings and cannot be deleted.");
+  const hasActiveBookings = turf.slots.some((slot) => {
+    if (!slot.booking) {
+      return false;
+    }
+
+    return (
+      slot.booking.status === "CONFIRMED" &&
+      slot.endTime > now
+    );
+  });
+
+  if (hasActiveBookings) {
+    throw new Error(
+      "This turf has upcoming bookings and cannot be deleted."
+    );
   }
 
-  // Delete Cloudinary image first
   if (turf.imagePublicId) {
     try {
       await uploadService.deleteImage(turf.imagePublicId);
@@ -184,6 +203,14 @@ const deleteTurf = async (turfId, ownerId) => {
   }
 
   await prisma.$transaction([
+    prisma.booking.deleteMany({
+      where: {
+        slot: {
+          turfId,
+        },
+      },
+    }),
+
     prisma.slot.deleteMany({
       where: {
         turfId,
@@ -201,6 +228,7 @@ const deleteTurf = async (turfId, ownerId) => {
     message: "Turf deleted successfully.",
   };
 };
+
 const updateTurf = async (turfId, ownerId, turfData) => {
   const turf = await prisma.turf.findUnique({
     where: {

@@ -32,7 +32,7 @@ router.get(
   "/owner/today-schedule",
   authenticate,
   authorize("OWNER"),
-  dashboardController.getOwnerTodaySchedule,
+  dashboardController.getOwnerTodayCalendar,
 );
 
 module.exports = router;

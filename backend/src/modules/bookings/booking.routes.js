@@ -13,11 +13,26 @@ router.post(
   authorize("PLAYER"),
   bookingController.createBooking,
 );
+
 router.get(
   "/my",
   authenticate,
   authorize("PLAYER"),
   bookingController.getMyBookings,
+);
+
+router.get(
+  "/owner",
+  authenticate,
+  authorize("OWNER"),
+  bookingController.getOwnerBookings,
+);
+
+router.patch(
+  "/:id/cancel",
+  authenticate,
+  authorize("PLAYER"),
+  bookingController.cancelBooking,
 );
 
 module.exports = router;

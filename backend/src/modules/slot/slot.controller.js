@@ -4,15 +4,13 @@ const createSlot = async (req, res) => {
   try {
     const { turfId, startTime, endTime } = req.body;
 
-    const ownerId = req.user.id;
-
     const slot = await slotService.createSlot(
       {
         turfId,
         startTime,
         endTime,
       },
-      ownerId,
+      req.user.id,
     );
 
     return res.status(201).json({
@@ -32,13 +30,104 @@ const getSlotsByTurfId = async (req, res) => {
   try {
     const { turfId } = req.params;
 
-    const ownerId = req.user.id;
-
-    const slots = await slotService.getSlotsByTurfId(turfId, ownerId);
+    const { turf, slots } = await slotService.getSlotsByTurfId(turfId);
 
     return res.status(200).json({
       success: true,
+      turf,
       slots,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const getOwnerCalendar = async (req, res) => {
+  try {
+    const schedule = await slotService.getOwnerCalendar(
+      req.user.id,
+      req.query.date,
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        schedule,
+      },
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const editSlot = async (req, res) => {
+  try {
+    const slot = await slotService.editSlot(
+      req.params.slotId,
+      req.body,
+      req.user.id,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Slot updated successfully",
+      slot,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const blockSlot = async (req, res) => {
+  try {
+    const slot = await slotService.blockSlot(req.params.slotId, req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Slot blocked successfully",
+      slot,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const unblockSlot = async (req, res) => {
+  try {
+    const slot = await slotService.unblockSlot(req.params.slotId, req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Slot unblocked successfully",
+      slot,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const deleteSlot = async (req, res) => {
+  try {
+    await slotService.deleteSlot(req.params.slotId, req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Slot deleted successfully",
     });
   } catch (error) {
     return res.status(400).json({
@@ -51,4 +140,9 @@ const getSlotsByTurfId = async (req, res) => {
 module.exports = {
   createSlot,
   getSlotsByTurfId,
+  getOwnerCalendar,
+  editSlot,
+  blockSlot,
+  unblockSlot,
+  deleteSlot,
 };

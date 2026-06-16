@@ -3,9 +3,9 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const register = async (userData) => {
-  const { name, email, password, role } = userData;
+  const { name, email, phone, password, role } = userData;
 
-  if (!name || !email || !password || !role) {
+  if (!name || !email || !phone || !password || !role) {
     throw new Error("All fields are required");
   }
 
@@ -15,6 +15,12 @@ const register = async (userData) => {
 
   if (!allowedRoles.includes(role)) {
     throw new Error("Invalid role");
+  }
+
+  const phoneRegex = /^[6-9]\d{9}$/;
+
+  if (!phoneRegex.test(phone)) {
+    throw new Error("Please enter a valid 10-digit mobile number");
   }
 
   //Check for duplicate users based on email
@@ -40,6 +46,7 @@ const register = async (userData) => {
     data: {
       name,
       email,
+      phone,
       passwordHash,
       role,
     },
@@ -49,6 +56,7 @@ const register = async (userData) => {
     id: user.id,
     name: user.name,
     email: user.email,
+    phone: user.phone,
     role: user.role,
   };
 };
@@ -67,7 +75,7 @@ const login = async (credentials) => {
   });
 
   if (!user) {
-    throw new Error("Invalid credentials");
+    throw new Error("Invalid email or password");
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.passwordHash);

@@ -1,4 +1,7 @@
 const prisma = require("../../config/prisma");
+const {
+  releaseExpiredBookings,
+} = require("../bookings/bookingLifecycle.service");
 
 const getStartOfToday = () => {
   const date = new Date();
@@ -24,10 +27,13 @@ const getActiveTurfs = (ownerId) => {
 const getTodayBookings = (ownerId) => {
   return prisma.booking.count({
     where: {
+      status: "CONFIRMED",
+
       slot: {
         turf: {
           ownerId,
         },
+
         startTime: {
           gte: getStartOfToday(),
           lte: getEndOfToday(),
@@ -42,8 +48,11 @@ const getUpcomingSlots = (ownerId) => {
     where: {
       turf: {
         ownerId,
+        isActive: true,
       },
+
       status: "AVAILABLE",
+
       startTime: {
         gt: new Date(),
       },
@@ -54,12 +63,17 @@ const getUpcomingSlots = (ownerId) => {
 const getUniquePlayers = async (ownerId) => {
   const bookings = await prisma.booking.findMany({
     where: {
+      status: {
+        in: ["CONFIRMED", "COMPLETED"],
+      },
+
       slot: {
         turf: {
           ownerId,
         },
       },
     },
+
     select: {
       playerId: true,
     },
@@ -71,18 +85,21 @@ const getUniquePlayers = async (ownerId) => {
 const getRevenue = async (ownerId) => {
   const bookings = await prisma.booking.findMany({
     where: {
-      status: "CONFIRMED",
+      status: "COMPLETED",
+
       slot: {
         turf: {
           ownerId,
         },
       },
     },
+
     select: {
       slot: {
         select: {
           startTime: true,
           endTime: true,
+
           turf: {
             select: {
               pricePerHour: true,
@@ -100,10 +117,6 @@ const getRevenue = async (ownerId) => {
     const durationInHours = (end - start) / (1000 * 60 * 60);
 
     if (durationInHours <= 0) {
-      console.warn(
-        `Skipping invalid slot. Start: ${booking.slot.startTime.toISOString()}, End: ${booking.slot.endTime.toISOString()}`,
-      );
-
       return total;
     }
 
@@ -112,6 +125,8 @@ const getRevenue = async (ownerId) => {
 };
 
 const getOwnerDashboardStats = async (ownerId) => {
+  await releaseExpiredBookings();
+
   const [activeTurfs, todayBookings, upcomingSlots, players, revenue] =
     await Promise.all([
       getActiveTurfs(ownerId),
@@ -131,6 +146,8 @@ const getOwnerDashboardStats = async (ownerId) => {
 };
 
 const getOwnerRecentBookings = async (ownerId) => {
+  await releaseExpiredBookings();
+
   return prisma.booking.findMany({
     where: {
       slot: {
@@ -176,7 +193,9 @@ const getOwnerRecentBookings = async (ownerId) => {
  * Returns today's slots grouped by turf.
  * This powers the Owner Dashboard timeline.
  */
-const getOwnerTodaySchedule = async (ownerId) => {
+const getOwnerTodayCalendar = async (ownerId) => {
+  await releaseExpiredBookings();
+
   const turfs = await prisma.turf.findMany({
     where: {
       ownerId,
@@ -213,6 +232,7 @@ const getOwnerTodaySchedule = async (ownerId) => {
           booking: {
             select: {
               id: true,
+              status: true,
 
               player: {
                 select: {
@@ -227,11 +247,19 @@ const getOwnerTodaySchedule = async (ownerId) => {
     },
   });
 
-  return turfs;
+  return turfs.map((turf) => ({
+    ...turf,
+
+    slots: turf.slots.map((slot) => ({
+      ...slot,
+
+      booking: slot.booking?.status === "CONFIRMED" ? slot.booking : null,
+    })),
+  }));
 };
 
 module.exports = {
   getOwnerDashboardStats,
   getOwnerRecentBookings,
-  getOwnerTodaySchedule,
+  getOwnerTodayCalendar,
 };
