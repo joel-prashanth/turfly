@@ -1,6 +1,6 @@
 import { CalendarClock, CheckCircle2, Lock, User } from "lucide-react";
 
-import SlotActions from "../../slots/SlotActions";
+import SlotActions from "./SlotActions";
 
 const STATUS_STYLES = {
   AVAILABLE: "bg-emerald-50 text-emerald-700 border border-emerald-200",
@@ -20,6 +20,13 @@ const formatTime = (date) =>
     minute: "2-digit",
   });
 
+const formatDate = (date) =>
+  new Date(date).toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 function SlotRow({ slot, refreshSlots, onEdit }) {
   const isBooked = slot.status === "BOOKED";
   const isBlocked = slot.status === "BLOCKED";
@@ -35,6 +42,10 @@ function SlotRow({ slot, refreshSlots, onEdit }) {
           <h4 className="font-semibold text-slate-900">
             {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
           </h4>
+
+          <p className="mt-1 text-sm text-slate-500">
+            {formatDate(slot.startTime)}
+          </p>
 
           {isBooked && slot.booking?.player ? (
             <div className="mt-2 flex items-center gap-2 text-sm text-slate-600">

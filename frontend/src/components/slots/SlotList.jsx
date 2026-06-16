@@ -1,7 +1,7 @@
 import EmptyState from "../ui/EmptyState";
-import SlotRow from "../../components/owner/calendar/SlotRow";
+import SlotRow from "./SlotRow";
 
-function SlotList({ slots, refreshSlots }) {
+function SlotList({ slots, refreshSlots, onEdit }) {
   if (slots.length === 0) {
     return (
       <EmptyState
@@ -14,7 +14,12 @@ function SlotList({ slots, refreshSlots }) {
   return (
     <div className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
       {slots.map((slot) => (
-        <SlotRow key={slot.id} slot={slot} refreshSlots={refreshSlots} />
+        <SlotRow
+          key={slot.id}
+          slot={slot}
+          refreshSlots={refreshSlots}
+          onEdit={onEdit}
+        />
       ))}
     </div>
   );

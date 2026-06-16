@@ -7,7 +7,8 @@ import Button from "../components/ui/Button";
 import Container from "../components/ui/Container";
 import PageHeader from "../components/ui/PageHeader";
 import Spinner from "../components/ui/Spinner";
-
+import Modal from "../components/ui/Modal";
+import SlotForm from "../components/sections/SlotForm/SlotForm";
 import SlotList from "../components/slots/SlotList";
 
 import { getSlotsByTurfId } from "../api/slotApi";
@@ -19,7 +20,9 @@ function ManageSlotsPage() {
   const [turf, setTurf] = useState(null);
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState(null);
   const fetchSlots = async () => {
     try {
       setLoading(true);
@@ -47,7 +50,7 @@ function ManageSlotsPage() {
           Back
         </Button>
 
-        <Button onClick={() => navigate(`/owner/turfs/${turfId}/slots/create`)}>
+        <Button onClick={() => setShowCreateModal(true)}>
           <Plus size={18} className="mr-2" />
           Add Slot
         </Button>
@@ -80,9 +83,53 @@ function ManageSlotsPage() {
             <Spinner />
           </div>
         ) : (
-          <SlotList slots={slots} refreshSlots={fetchSlots} />
+          <SlotList
+            slots={slots}
+            refreshSlots={fetchSlots}
+            onEdit={(slot) => {
+              setSelectedSlot(slot);
+              setShowEditModal(true);
+            }}
+          />
         )}
       </div>
+
+      <Modal
+        open={showCreateModal}
+        title="Create Slot"
+        onClose={() => setShowCreateModal(false)}
+      >
+        <SlotForm
+          turfId={turfId}
+          embedded
+          onSuccess={async () => {
+            await fetchSlots();
+            setShowCreateModal(false);
+          }}
+        />
+      </Modal>
+      <Modal
+        open={showEditModal}
+        title="Edit Slot"
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedSlot(null);
+        }}
+      >
+        {selectedSlot && (
+          <SlotForm
+            turfId={turfId}
+            mode="edit"
+            initialValues={selectedSlot}
+            embedded
+            onSuccess={async () => {
+              await fetchSlots();
+              setShowEditModal(false);
+              setSelectedSlot(null);
+            }}
+          />
+        )}
+      </Modal>
     </Container>
   );
 }

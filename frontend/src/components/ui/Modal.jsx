@@ -33,26 +33,22 @@ const Modal = ({
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
-      onClick={() => {
-        if (closeOnBackdrop) {
-          onClose?.();
-        }
-      }}
+      onClick={() => closeOnBackdrop && onClose?.()}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? "modal-title" : undefined}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+        className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
       >
         {title && (
-          <h2 id="modal-title" className="text-xl font-semibold text-slate-900">
+          <h2 id="modal-title" className="text-2xl font-bold text-slate-900">
             {title}
           </h2>
         )}
 
-        <div className={title ? "mt-4" : ""}>{children}</div>
+        <div className={title ? "mt-6" : ""}>{children}</div>
 
         {footer && <div className="mt-8 flex justify-end gap-3">{footer}</div>}
       </div>
