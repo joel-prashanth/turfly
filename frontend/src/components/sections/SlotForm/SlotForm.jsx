@@ -9,7 +9,7 @@ import Input from "../../ui/Input";
 
 import { createSlot } from "../../../api/slotApi";
 
-function SlotForm({ turfId, onSuccess }) {
+function SlotForm({ turfId, mode = "create", initialValues = {}, onSuccess }) {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -50,8 +50,6 @@ function SlotForm({ turfId, onSuccess }) {
       } else {
         navigate("/owner/turfs");
       }
-
-      navigate("/owner/turfs");
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to create slot.");
     } finally {

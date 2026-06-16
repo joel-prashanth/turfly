@@ -8,7 +8,7 @@ import Button from "../components/ui/Button";
 
 import CalendarBoard from "../components/owner/calendar/CalendarBoard";
 import CalendarBoardSkeleton from "../components/skeletons/CalendarBoardSkeleton";
-
+import CalendarSummary from "../components/owner/calendar/CalendarSummary";
 import { getOwnerCalendar } from "../api/slotApi";
 
 const formatDateForApi = (date) => {
@@ -30,6 +30,8 @@ function OwnerCalendarPage() {
   const [loading, setLoading] = useState(true);
 
   const heading = useMemo(() => formatHeading(selectedDate), [selectedDate]);
+  const isToday =
+    formatDateForApi(selectedDate) === formatDateForApi(new Date());
 
   const fetchSchedule = useCallback(
     async (showSkeleton = false) => {
@@ -83,16 +85,29 @@ function OwnerCalendarPage() {
 
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div>
-          <p className="text-sm text-slate-500">Selected Date</p>
+          <h2 className="text-2xl font-bold text-slate-900">{heading}</h2>
 
-          <h2 className="mt-1 text-xl font-semibold text-slate-900">
-            {heading}
-          </h2>
+          <div className="mt-3 flex items-center gap-3">
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                isToday
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {isToday ? "Today" : "Viewing Schedule"}
+            </span>
+
+            <p className="text-sm text-slate-500">
+              View your turf schedule and bookings.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
           <Button variant="secondary" onClick={previousDay}>
-            <ChevronLeft size={18} />
+            <ChevronLeft size={18} className="mr-2" />
+            Previous
           </Button>
 
           <Button variant="secondary" onClick={today}>
@@ -100,7 +115,8 @@ function OwnerCalendarPage() {
           </Button>
 
           <Button variant="secondary" onClick={nextDay}>
-            <ChevronRight size={18} />
+            Next
+            <ChevronRight size={18} className="ml-2" />
           </Button>
         </div>
       </div>
@@ -108,7 +124,11 @@ function OwnerCalendarPage() {
       {loading ? (
         <CalendarBoardSkeleton />
       ) : (
-        <CalendarBoard schedule={schedule} />
+        <>
+          <CalendarSummary schedule={schedule} />
+
+          <CalendarBoard schedule={schedule} />
+        </>
       )}
     </Container>
   );

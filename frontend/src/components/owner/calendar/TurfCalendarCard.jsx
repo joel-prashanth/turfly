@@ -19,7 +19,8 @@ function TurfCalendarCard({ turf }) {
           </div>
 
           <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">
-            {turf.slots.length} {turf.slots.length === 1 ? "slot" : "slots"}
+            {turf.slots.length}{" "}
+            {turf.slots.length === 1 ? "Scheduled Slot" : "Scheduled Slots"}
           </div>
         </div>
       </div>
