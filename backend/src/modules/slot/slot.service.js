@@ -30,6 +30,38 @@ const getOwnedSlot = async (slotId, ownerId) => {
   return slot;
 };
 
+const calculateSlotAmount = (startTime, endTime, pricePerHour) => {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+
+  const durationMs = end.getTime() - start.getTime();
+  const durationHours = durationMs / (1000 * 60 * 60);
+
+  return Math.round(durationHours * pricePerHour);
+};
+
+const formatConfirmedBooking = (slot, pricePerHour) => {
+  if (!slot.booking || slot.booking.status !== "CONFIRMED") {
+    return null;
+  }
+
+  return {
+    id: slot.booking.id,
+    status: slot.booking.status,
+    createdAt: slot.booking.createdAt,
+    amount: calculateSlotAmount(slot.startTime, slot.endTime, pricePerHour),
+
+    player: slot.booking.player
+      ? {
+          id: slot.booking.player.id,
+          name: slot.booking.player.name,
+          email: slot.booking.player.email,
+          phone: slot.booking.player.phone,
+        }
+      : null,
+  };
+};
+
 const createSlot = async (slotData, ownerId) => {
   const { turfId, startTime, endTime } = slotData;
 
@@ -65,9 +97,11 @@ const createSlot = async (slotData, ownerId) => {
   const overlappingSlot = await prisma.slot.findFirst({
     where: {
       turfId,
+
       startTime: {
         lt: end,
       },
+
       endTime: {
         gt: start,
       },
@@ -117,11 +151,14 @@ const getSlotsByTurfId = async (turfId) => {
             select: {
               id: true,
               status: true,
+              createdAt: true,
 
               player: {
                 select: {
                   id: true,
                   name: true,
+                  email: true,
+                  phone: true,
                 },
               },
             },
@@ -145,9 +182,12 @@ const getSlotsByTurfId = async (turfId) => {
     },
 
     slots: turf.slots.map((slot) => ({
-      ...slot,
+      id: slot.id,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      status: slot.status,
 
-      booking: slot.booking?.status === "CONFIRMED" ? slot.booking : null,
+      booking: formatConfirmedBooking(slot, turf.pricePerHour),
     })),
   };
 };
@@ -156,6 +196,10 @@ const getOwnerCalendar = async (ownerId, date) => {
   await releaseExpiredBookings();
 
   const selectedDate = date ? new Date(date) : new Date();
+
+  if (isNaN(selectedDate.getTime())) {
+    throw new Error("Invalid date");
+  }
 
   const startOfDay = new Date(selectedDate);
   startOfDay.setHours(0, 0, 0, 0);
@@ -176,7 +220,9 @@ const getOwnerCalendar = async (ownerId, date) => {
     select: {
       id: true,
       name: true,
+      location: true,
       sport: true,
+      pricePerHour: true,
 
       slots: {
         where: {
@@ -200,11 +246,13 @@ const getOwnerCalendar = async (ownerId, date) => {
             select: {
               id: true,
               status: true,
+              createdAt: true,
 
               player: {
                 select: {
                   id: true,
                   name: true,
+                  email: true,
                   phone: true,
                 },
               },
@@ -216,12 +264,19 @@ const getOwnerCalendar = async (ownerId, date) => {
   });
 
   return schedule.map((turf) => ({
-    ...turf,
+    id: turf.id,
+    name: turf.name,
+    location: turf.location,
+    sport: turf.sport,
+    pricePerHour: turf.pricePerHour,
 
     slots: turf.slots.map((slot) => ({
-      ...slot,
+      id: slot.id,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      status: slot.status,
 
-      booking: slot.booking?.status === "CONFIRMED" ? slot.booking : null,
+      booking: formatConfirmedBooking(slot, turf.pricePerHour),
     })),
   }));
 };
@@ -234,6 +289,10 @@ const editSlot = async (slotId, slotData, ownerId) => {
   }
 
   const { startTime, endTime } = slotData;
+
+  if (!startTime || !endTime) {
+    throw new Error("Start time and end time are required");
+  }
 
   const start = new Date(startTime);
   const end = new Date(endTime);
@@ -339,6 +398,7 @@ const deleteSlot = async (slotId, ownerId) => {
 
   return;
 };
+
 module.exports = {
   createSlot,
   getSlotsByTurfId,
