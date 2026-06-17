@@ -6,6 +6,7 @@ import Button from "../components/ui/Button";
 
 import CalendarSidebar from "../components/owner/calendar/CalendarSidebar";
 import CalendarDayBoard from "../components/owner/calendar/CalendarDayBoard";
+import CalendarWeekBoard from "../components/owner/calendar/CalendarWeekBoard";
 import CalendarCreateSlotModal from "../components/owner/calendar/CalendarCreateSlotModal";
 import CalendarEditSlotModal from "../components/owner/calendar/CalendarEditSlotModal";
 import CalendarBookingModal from "../components/owner/calendar/CalendarBookingModal";
@@ -52,6 +53,8 @@ const isSameDay = (dateA, dateB) =>
 
 function OwnerCalendarPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState("DAY");
+
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -130,6 +133,11 @@ function OwnerCalendarPage() {
     setSelectedDate(new Date());
   };
 
+  const handleWeekDaySelect = (date) => {
+    setSelectedDate(date);
+    setViewMode("DAY");
+  };
+
   const handleBlockSlot = async (slot) => {
     try {
       await blockSlot(slot.id);
@@ -198,9 +206,31 @@ function OwnerCalendarPage() {
                           Calendar
                         </h1>
 
-                        <span className="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
-                          Day View
-                        </span>
+                        <div className="flex overflow-hidden rounded-full border border-slate-200 bg-slate-50 p-1">
+                          <button
+                            type="button"
+                            onClick={() => setViewMode("DAY")}
+                            className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+                              viewMode === "DAY"
+                                ? "bg-green-600 text-white shadow-sm"
+                                : "text-slate-500 hover:text-slate-900"
+                            }`}
+                          >
+                            Day
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setViewMode("WEEK")}
+                            className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+                              viewMode === "WEEK"
+                                ? "bg-green-600 text-white shadow-sm"
+                                : "text-slate-500 hover:text-slate-900"
+                            }`}
+                          >
+                            Week
+                          </button>
+                        </div>
 
                         {viewingToday && (
                           <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -266,44 +296,55 @@ function OwnerCalendarPage() {
               </div>
             </div>
 
-            <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-                  Selected Day
-                </p>
+            {viewMode === "DAY" && (
+              <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+                    Selected Day
+                  </p>
 
-                <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
-                  {formatSelectedDate(selectedDate)}
-                </h2>
-              </div>
-
-              <p className="text-sm text-slate-500">
-                {loading
-                  ? "Loading schedule..."
-                  : totalFilteredSlots === 0
-                    ? "No slots match current filters"
-                    : `${totalFilteredSlots} slot${
-                        totalFilteredSlots > 1 ? "s" : ""
-                      } shown`}
-              </p>
-            </div>
-
-            {loading ? (
-              <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="space-y-3">
-                  <div className="h-24 animate-pulse rounded-2xl bg-slate-100" />
-                  <div className="h-24 animate-pulse rounded-2xl bg-slate-100" />
-                  <div className="h-24 animate-pulse rounded-2xl bg-slate-100" />
+                  <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
+                    {formatSelectedDate(selectedDate)}
+                  </h2>
                 </div>
+
+                <p className="text-sm text-slate-500">
+                  {loading
+                    ? "Loading schedule..."
+                    : totalFilteredSlots === 0
+                      ? "No slots match current filters"
+                      : `${totalFilteredSlots} slot${
+                          totalFilteredSlots > 1 ? "s" : ""
+                        } shown`}
+                </p>
               </div>
+            )}
+
+            {viewMode === "DAY" ? (
+              loading ? (
+                <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="space-y-3">
+                    <div className="h-24 animate-pulse rounded-2xl bg-slate-100" />
+                    <div className="h-24 animate-pulse rounded-2xl bg-slate-100" />
+                    <div className="h-24 animate-pulse rounded-2xl bg-slate-100" />
+                  </div>
+                </div>
+              ) : (
+                <CalendarDayBoard
+                  schedule={filteredSchedule}
+                  onEditSlot={(slot) => setEditModalSlot(slot)}
+                  onBlockSlot={handleBlockSlot}
+                  onUnblockSlot={handleUnblockSlot}
+                  onDeleteSlot={handleDeleteSlot}
+                  onViewBooking={(slot) => setBookingModalSlot(slot)}
+                />
+              )
             ) : (
-              <CalendarDayBoard
-                schedule={filteredSchedule}
-                onEditSlot={(slot) => setEditModalSlot(slot)}
-                onBlockSlot={handleBlockSlot}
-                onUnblockSlot={handleUnblockSlot}
-                onDeleteSlot={handleDeleteSlot}
-                onViewBooking={(slot) => setBookingModalSlot(slot)}
+              <CalendarWeekBoard
+                selectedDate={selectedDate}
+                selectedTurfId={selectedTurfId}
+                selectedStatus={selectedStatus}
+                onSelectDay={handleWeekDaySelect}
               />
             )}
           </main>
