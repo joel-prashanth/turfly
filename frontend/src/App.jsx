@@ -24,6 +24,7 @@ import CreateSlotPage from "./pages/CreateSlotPage";
 import OwnerCalendarPage from "./pages/OwnerCalendarPage";
 import OwnerBookingsPage from "./pages/OwnerBookingsPage";
 import ManageSlotsPage from "./pages/ManageSlotsPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -87,6 +88,15 @@ function App() {
           />
 
           <Route
+            path="/owner/profile"
+            element={
+              <ProtectedRoute allowedRole="OWNER">
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/owner/turfs"
             element={
               <ProtectedRoute allowedRole="OWNER">
@@ -114,19 +124,19 @@ function App() {
           />
 
           <Route
-            path="/owner/turfs/:turfId/slots/create"
+            path="/owner/turfs/:turfId/slots"
             element={
               <ProtectedRoute allowedRole="OWNER">
-                <CreateSlotPage />
+                <ManageSlotsPage />
               </ProtectedRoute>
             }
           />
 
           <Route
-            path="/owner/turfs/:turfId/slots"
+            path="/owner/turfs/:turfId/slots/create"
             element={
               <ProtectedRoute allowedRole="OWNER">
-                <ManageSlotsPage />
+                <CreateSlotPage />
               </ProtectedRoute>
             }
           />
@@ -139,16 +149,16 @@ function App() {
               </ProtectedRoute>
             }
           />
-        </Route>
 
-        <Route
-          path="/owner/bookings"
-          element={
-            <ProtectedRoute allowedRole="OWNER">
-              <OwnerBookingsPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/owner/bookings"
+            element={
+              <ProtectedRoute allowedRole="OWNER">
+                <OwnerBookingsPage />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

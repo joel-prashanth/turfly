@@ -43,36 +43,41 @@ function DashboardStats() {
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
       <StatCard
         label="Active Turfs"
         value={stats.activeTurfs}
-        icon={<MapPinned className="text-green-700" />}
+        icon={MapPinned}
+        helper="Currently listed"
       />
 
       <StatCard
         label="Today's Bookings"
         value={stats.todayBookings}
-        icon={<CalendarDays className="text-green-700" />}
+        icon={CalendarDays}
+        helper="Confirmed today"
       />
 
       <StatCard
         label="Upcoming Slots"
         value={stats.upcomingSlots}
-        icon={<Layers3 className="text-green-700" />}
+        icon={Layers3}
+        helper="Available ahead"
       />
 
       <StatCard
         label="Players"
         value={stats.players}
-        icon={<Users className="text-green-700" />}
+        icon={Users}
+        helper="Unique customers"
       />
 
       <StatCard
         label="Revenue"
         value={stats.revenue}
         prefix="₹"
-        icon={<CircleDollarSign className="text-green-700" />}
+        icon={CircleDollarSign}
+        helper="Total confirmed"
       />
     </div>
   );

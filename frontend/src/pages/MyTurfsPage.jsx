@@ -87,15 +87,13 @@ function MyTurfsPage() {
 
   if (loading) {
     return (
-      <Container className="py-10">
-        <div className="mb-8">
-          <PageHeader
-            title="My Turfs"
-            subtitle="Manage all your sports venues."
-          />
-        </div>
+      <Container className="py-8">
+        <PageHeader
+          title="My Turfs"
+          subtitle="Manage all your sports venues."
+        />
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-5 xl:grid-cols-2">
           <TurfCardSkeleton />
           <TurfCardSkeleton />
           <TurfCardSkeleton />
@@ -106,22 +104,17 @@ function MyTurfsPage() {
   }
 
   return (
-    <Container className="py-10">
-      <div className="mb-8 flex items-center justify-between">
-        <PageHeader
-          title="My Turfs"
-          subtitle="Manage all your sports venues."
-        />
-
+    <Container className="py-8">
+      <PageHeader title="My Turfs" subtitle="Manage all your sports venues.">
         <Link to="/owner/turfs/create">
-          <Button>
-            <Plus size={18} className="mr-2" />
+          <Button size="sm">
+            <Plus size={16} className="mr-2" />
             Create Turf
           </Button>
         </Link>
-      </div>
+      </PageHeader>
 
-      <div className="mb-8">
+      <div className="mb-6 max-w-md">
         <SearchInput
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -144,32 +137,33 @@ function MyTurfsPage() {
           description="Try searching with a different name."
         />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-5 xl:grid-cols-2">
           {filteredTurfs.map((turf) => (
             <TurfCard
               key={turf.id}
               turf={turf}
               actions={
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2.5">
                   <Link to={`/owner/turfs/${turf.id}/slots`}>
-                    <Button>
-                      <CalendarDays size={18} className="mr-2" />
+                    <Button size="sm">
+                      <CalendarDays size={16} className="mr-2" />
                       Manage Slots
                     </Button>
                   </Link>
 
                   <Link to={`/owner/turfs/${turf.id}/edit`}>
-                    <Button variant="secondary">
-                      <Pencil size={18} className="mr-2" />
+                    <Button variant="secondary" size="sm">
+                      <Pencil size={16} className="mr-2" />
                       Edit Turf
                     </Button>
                   </Link>
 
                   <Button
                     variant="danger"
+                    size="sm"
                     onClick={() => handleDelete(turf.id, turf.name)}
                   >
-                    <Trash2 size={18} className="mr-2" />
+                    <Trash2 size={16} className="mr-2" />
                     Delete Turf
                   </Button>
                 </div>

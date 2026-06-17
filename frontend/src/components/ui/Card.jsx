@@ -1,6 +1,6 @@
 import clsx from "clsx";
 
-function Card({ children, className, hover = true, ...props }) {
+function Card({ children, className, hover = false, ...props }) {
   return (
     <div
       className={clsx(

@@ -20,7 +20,7 @@ function KPICard({
       "
     >
       <div className={`inline-flex rounded-xl p-3 ${bg}`}>
-        <Icon className={color} size={22} />
+        <Icon className={color} size={18} />
       </div>
 
       <h3 className={`mt-5 text-4xl font-bold ${color}`}>{value}</h3>

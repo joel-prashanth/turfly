@@ -51,10 +51,6 @@ function OwnerBookingsPage() {
 
   return (
     <Container className="py-8">
-      <PageHeader
-        title="Bookings"
-        subtitle="Manage reservations across all your turfs."
-      />
 
       <OwnerBookingFilters
         search={search}

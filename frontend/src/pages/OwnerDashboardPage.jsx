@@ -1,26 +1,25 @@
-import { useAuth } from "../hooks/useAuth";
-
 import Container from "../components/ui/Container";
 import PageHeader from "../components/ui/PageHeader";
+
 import DashboardStats from "../components/owner/DashboardStats";
 import QuickActions from "../components/owner/QuickActions";
 import RecentBookings from "../components/owner/RecentBookings";
 import RevenueChart from "../components/owner/analytics/RevenueChart";
 
 function OwnerDashboardPage() {
-  const { user } = useAuth();
-
   return (
-    <Container className="py-10">
+    <Container className="py-8">
       <PageHeader
-        title={`Welcome back, ${user?.name} 👋`}
-        subtitle="Manage your sports venues from one place."
+        title="Dashboard"
+        subtitle="Monitor your business performance."
       />
 
       <DashboardStats />
 
       <QuickActions />
+
       <RevenueChart />
+
       <RecentBookings />
     </Container>
   );

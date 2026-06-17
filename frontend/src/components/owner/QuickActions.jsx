@@ -27,8 +27,8 @@ function QuickActions() {
         />
 
         <QuickActionCard
-          title="Add Slots"
-          description="Calendar playing slots and manage availability."
+          title="View Slots"
+          description="View your Calendar of slots."
           icon={<CalendarPlus size={28} />}
           to="/owner/calendar"
         />

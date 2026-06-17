@@ -18,22 +18,22 @@ function Button({
 
   const variants = {
     primary:
-      "bg-green-600 text-white shadow-sm hover:bg-green-700 hover:shadow-lg",
+      "bg-green-600 text-white shadow-sm hover:bg-green-700 hover:shadow-md",
 
     secondary:
       "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
 
     white: "bg-white text-slate-900 shadow-sm hover:bg-slate-100",
 
-    danger: "bg-red-600 text-white shadow-sm hover:bg-red-700 hover:shadow-lg",
+    danger: "bg-red-600 text-white shadow-sm hover:bg-red-700 hover:shadow-md",
 
     ghost: "bg-transparent text-slate-700 hover:bg-slate-100",
   };
 
   const sizes = {
-    sm: "px-3 py-2 text-sm",
-    md: "px-5 py-3 text-sm",
-    lg: "px-6 py-4 text-base",
+    sm: "px-3.5 py-2 text-sm",
+    md: "px-4 py-2.5 text-sm",
+    lg: "px-5 py-3 text-base",
   };
 
   return (

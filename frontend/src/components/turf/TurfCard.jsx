@@ -25,9 +25,9 @@ function TurfCard({ turf, actions }) {
         bg-white
         transition-all
         duration-300
-        hover:-translate-y-1.5
+        hover:-translate-y-1
         hover:border-green-200
-        hover:shadow-2xl
+        hover:shadow-xl
       "
     >
       <div className="relative overflow-hidden">
@@ -35,7 +35,7 @@ function TurfCard({ turf, actions }) {
           src={turf.imageUrl || FALLBACK_IMAGE}
           alt={turf.name}
           className="
-            h-60
+            h-48
             w-full
             object-cover
             transition-transform
@@ -47,22 +47,21 @@ function TurfCard({ turf, actions }) {
           }}
         />
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
 
-        {/* Sport Badge */}
         <div className="absolute left-4 top-4">
           <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-sm ${sportColors[turf.sport]}`}
+            className={`rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-sm ${
+              sportColors[turf.sport] || "bg-slate-100 text-slate-700"
+            }`}
           >
             {turf.sport}
           </span>
         </div>
       </div>
 
-      <div className="p-6">
-        {/* Status */}
-        <div className="mb-4 flex items-center">
+      <div className="p-5">
+        <div className="mb-3 flex items-center">
           <span
             className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
               turf.isActive
@@ -80,37 +79,31 @@ function TurfCard({ turf, actions }) {
           </span>
         </div>
 
-        {/* Name */}
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+        <h2 className="line-clamp-1 text-xl font-bold tracking-tight text-slate-900">
           {turf.name}
         </h2>
 
-        {/* Description */}
-        <p className="mt-3 line-clamp-2 text-[15px] leading-7 text-slate-500">
+        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
           {turf.description || "No description available."}
         </p>
 
-        {/* Location */}
-        <div className="mt-5 flex items-center gap-2 text-sm text-slate-600">
-          <MapPin size={17} className="shrink-0 text-slate-400" />
+        <div className="mt-4 flex items-center gap-2 text-sm text-slate-600">
+          <MapPin size={16} className="shrink-0 text-slate-400" />
           <span className="truncate">{turf.location}</span>
         </div>
 
-        {/* Price */}
-        <div className="mt-7 flex items-end justify-between">
-          <div>
-            <div className="flex items-end gap-1">
-              <span className="text-3xl font-bold tracking-tight text-green-600">
-                ₹{turf.pricePerHour}
-              </span>
+        <div className="mt-5 flex items-end justify-between">
+          <div className="flex items-end gap-1">
+            <span className="text-2xl font-bold tracking-tight text-green-600">
+              ₹{turf.pricePerHour}
+            </span>
 
-              <span className="pb-1 text-sm text-slate-500">/ hour</span>
-            </div>
+            <span className="pb-0.5 text-sm text-slate-500">/ hour</span>
           </div>
         </div>
 
         {actions && (
-          <div className="mt-6 border-t border-slate-100 pt-6">{actions}</div>
+          <div className="mt-5 border-t border-slate-100 pt-5">{actions}</div>
         )}
       </div>
     </Card>

@@ -5,11 +5,11 @@ function Logo() {
   return (
     <Link to="/" className="flex items-center gap-3">
       <div className="rounded-xl bg-green-600 p-2 text-white shadow-md">
-        <Trophy size={22} />
+        <Trophy size={20} />
       </div>
 
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-lg font-bold leading-tight tracking-tight text-slate-900">
           Turfly
         </h1>
 
