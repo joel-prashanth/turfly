@@ -20,12 +20,7 @@ const combineDateAndTime = (date, time) => {
   return new Date(`${date}T${time}:00`);
 };
 
-function CalendarCreateSlotModal({
-  open,
-  selectedDate,
-  onClose,
-  onSlotCreated,
-}) {
+function CalendarCreateSlotModal({ open, selectedDate, onClose, onSuccess }) {
   const [turfs, setTurfs] = useState([]);
   const [loadingTurfs, setLoadingTurfs] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -58,6 +53,7 @@ function CalendarCreateSlotModal({
         setLoadingTurfs(true);
 
         const response = await getMyTurfs();
+
         setTurfs(response.data?.turfs || response.turfs || []);
       } catch (error) {
         toast.error(error?.response?.data?.message || "Failed to load turfs.");
@@ -126,9 +122,10 @@ function CalendarCreateSlotModal({
 
       toast.success("Slot created successfully.");
 
+      await onSuccess?.();
+
       resetForm();
       onClose?.();
-      onSlotCreated?.();
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to create slot.");
     } finally {

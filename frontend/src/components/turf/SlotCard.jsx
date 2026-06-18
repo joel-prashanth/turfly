@@ -1,4 +1,10 @@
-import { CalendarDays, Clock } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  IndianRupee,
+  Lock,
+} from "lucide-react";
 
 import Button from "../ui/Button";
 import Card from "../ui/Card";
@@ -17,14 +23,82 @@ const formatTime = (date) =>
     minute: "2-digit",
   });
 
-const getDuration = (start, end) => {
-  const diff =
+const formatDuration = (start, end) => {
+  const diffInMinutes =
     (new Date(end).getTime() - new Date(start).getTime()) / 1000 / 60;
 
-  return `${diff} min`;
+  const hours = Math.floor(diffInMinutes / 60);
+  const minutes = diffInMinutes % 60;
+
+  if (hours && minutes) {
+    return `${hours} hr ${minutes} min`;
+  }
+
+  if (hours) {
+    return `${hours} hr${hours > 1 ? "s" : ""}`;
+  }
+
+  return `${minutes} min`;
 };
 
-function SlotCard({ slot, canBook, onBook }) {
+const getSlotMeta = (slot, isInProgress, hasEnded) => {
+  if (slot.status === "BOOKED") {
+    return {
+      label: "Booked",
+      helper: "This slot is already booked",
+      badge: "bg-blue-50 text-blue-700 border-blue-200",
+      rail: "bg-blue-500",
+    };
+  }
+
+  if (slot.status === "BLOCKED") {
+    return {
+      label: "Blocked",
+      helper: "Owner has blocked this slot",
+      badge: "bg-slate-100 text-slate-700 border-slate-200",
+      rail: "bg-slate-500",
+    };
+  }
+
+  if (hasEnded) {
+    return {
+      label: "Unavailable",
+      helper: "This slot has already ended",
+      badge: "bg-slate-100 text-slate-600 border-slate-200",
+      rail: "bg-slate-400",
+    };
+  }
+
+  if (isInProgress) {
+    return {
+      label: "In Progress",
+      helper: "This slot is currently live",
+      badge: "bg-amber-50 text-amber-700 border-amber-200",
+      rail: "bg-amber-500",
+    };
+  }
+
+  return {
+    label: "Available",
+    helper: "Ready to book",
+    badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    rail: "bg-emerald-500",
+  };
+};
+
+const calculateAmount = (slot, pricePerHour) => {
+  if (!pricePerHour) return null;
+
+  const durationHours =
+    (new Date(slot.endTime).getTime() - new Date(slot.startTime).getTime()) /
+    1000 /
+    60 /
+    60;
+
+  return Math.round(durationHours * Number(pricePerHour || 0));
+};
+
+function SlotCard({ slot, canBook, onBook, pricePerHour }) {
   const now = new Date();
 
   const start = new Date(slot.startTime);
@@ -33,88 +107,108 @@ function SlotCard({ slot, canBook, onBook }) {
   const isInProgress = now >= start && now < end;
   const hasEnded = now >= end;
 
+  const slotMeta = getSlotMeta(slot, isInProgress, hasEnded);
+  const amount = calculateAmount(slot, pricePerHour);
+
+  const isBookable =
+    slot.status === "AVAILABLE" && !hasEnded && !isInProgress && canBook;
+
   const renderAction = () => {
-    if (slot.status === "BOOKED") {
+    if (isBookable) {
       return (
-        <span className="rounded-full bg-red-100 px-4 py-2 text-sm font-semibold text-red-700">
-          Booked
-        </span>
+        <Button onClick={() => onBook(slot)} className="w-full sm:w-auto">
+          Book Now
+        </Button>
       );
     }
 
-    if (slot.status === "BLOCKED") {
+    if (slot.status === "AVAILABLE" && !hasEnded && !isInProgress && !canBook) {
       return (
-        <span className="rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">
-          Blocked
-        </span>
+        <div className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-600">
+          <Lock className="h-4 w-4" />
+          Players Only
+        </div>
       );
-    }
-
-    if (hasEnded) {
-      return (
-        <span className="rounded-full bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">
-          Unavailable
-        </span>
-      );
-    }
-
-    if (isInProgress) {
-      return (
-        <span className="rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-700">
-          In Progress
-        </span>
-      );
-    }
-
-    if (canBook) {
-      return <Button onClick={() => onBook(slot)}>Book Now</Button>;
     }
 
     return (
-      <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600">
-        Players Only
-      </span>
+      <div
+        className={`
+          inline-flex items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-bold
+          ${slotMeta.badge}
+        `}
+      >
+        {slotMeta.label}
+      </div>
     );
   };
 
   return (
     <Card
       className="
-        border
-        border-slate-200
-        p-6
-        transition-all
-        duration-300
-        hover:border-green-200
-        hover:shadow-lg
+        group overflow-hidden border border-slate-200 bg-white
+        transition-all duration-300
+        hover:border-emerald-200 hover:shadow-lg
       "
     >
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        {/* Slot Details */}
-        <div className="flex-1">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <CalendarDays size={16} />
-            {formatDate(slot.startTime)}
-          </div>
+      <div className="flex">
+        <div className={`w-1.5 shrink-0 ${slotMeta.rail}`} />
 
-          <div className="mt-5 flex items-center gap-3">
-            <Clock className="text-green-600" size={22} />
+        <div className="flex flex-1 flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`
+                  inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold
+                  ${slotMeta.badge}
+                `}
+              >
+                {slot.status === "AVAILABLE" && !hasEnded && !isInProgress && (
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                )}
+                {slotMeta.label}
+              </span>
 
-            <div>
-              <h3 className="text-xl font-semibold text-slate-900">
-                {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
-              </h3>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                <CalendarDays className="h-3.5 w-3.5" />
+                {formatDate(slot.startTime)}
+              </span>
+            </div>
 
-              <p className="mt-1 text-sm text-slate-500">
-                Duration: {getDuration(slot.startTime, slot.endTime)}
-              </p>
+            <div className="mt-4 flex items-start gap-3">
+              <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-700">
+                <Clock className="h-5 w-5" />
+              </div>
+
+              <div className="min-w-0">
+                <h3 className="text-xl font-bold tracking-tight text-slate-900">
+                  {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
+                </h3>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  {formatDuration(slot.startTime, slot.endTime)} ·{" "}
+                  {slotMeta.helper}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Action */}
-        <div className="flex justify-end">
-          {renderAction()}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:flex-col lg:items-end">
+            {amount !== null && (
+              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-left sm:text-right">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 sm:justify-end">
+                  <IndianRupee className="h-3.5 w-3.5" />
+                  Total
+                </div>
+
+                <p className="mt-1 text-xl font-bold text-slate-900">
+                  ₹{amount.toLocaleString("en-IN")}
+                </p>
+              </div>
+            )}
+
+            <div className="sm:min-w-32">{renderAction()}</div>
+          </div>
         </div>
       </div>
     </Card>
