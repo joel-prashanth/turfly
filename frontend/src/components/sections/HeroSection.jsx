@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   CalendarCheck,
@@ -18,6 +18,8 @@ import { getPlatformStats } from "../../api/stats";
 import heroImage from "../../assets/images/hero-turf.png";
 
 function HeroSection() {
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
   const [stats, setStats] = useState({
     turfs: 0,
     owners: 0,
@@ -67,21 +69,27 @@ function HeroSection() {
           </p>
 
           {/* Search */}
-          <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-2 shadow-xl transition-all duration-300 focus-within:border-green-300 focus-within:shadow-2xl">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              navigate(`/turfs${search.trim() ? `?search=${encodeURIComponent(search.trim())}` : ""}`);
+            }}
+            className="mt-10 rounded-3xl border border-slate-200 bg-white p-2 shadow-xl transition-all duration-300 focus-within:border-green-300 focus-within:shadow-2xl"
+          >
             <div className="flex flex-col gap-3 md:flex-row">
               <div className="flex flex-1 items-center gap-3 px-4">
                 <Search size={20} className="text-slate-400" />
-
                 <input
                   type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by turf or city..."
                   className="w-full bg-transparent py-3 text-slate-700 placeholder:text-slate-400 focus:outline-none"
                 />
               </div>
-
-              <Button className="px-8">Search</Button>
+              <Button type="submit" className="px-8">Search</Button>
             </div>
-          </div>
+          </form>
 
           {/* CTA */}
           <div className="mt-8 flex flex-wrap gap-4">

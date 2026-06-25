@@ -30,7 +30,7 @@ const combineDateAndTime = (date, time) => {
   return new Date(`${date}T${time}:00`);
 };
 
-function CalendarEditSlotModal({ open, slot, onClose, onSlotUpdated }) {
+function CalendarEditSlotModal({ open, slot, onClose, onSuccess }) {
   const [updating, setUpdating] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -93,7 +93,7 @@ function CalendarEditSlotModal({ open, slot, onClose, onSlotUpdated }) {
       toast.success("Slot updated successfully.");
 
       onClose?.();
-      onSlotUpdated?.();
+      onSuccess?.();
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to update slot.");
     } finally {
@@ -183,14 +183,18 @@ function CalendarEditSlotModal({ open, slot, onClose, onSlotUpdated }) {
                 End
               </label>
 
-              <input
-                type="time"
-                name="endTime"
-                value={formData.endTime}
-                onChange={handleChange}
-                disabled={updating}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-500/20 disabled:cursor-not-allowed disabled:bg-slate-50"
-              />
+              <div className="relative">
+                <Clock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+                <input
+                  type="time"
+                  name="endTime"
+                  value={formData.endTime}
+                  onChange={handleChange}
+                  disabled={updating}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-500/20 disabled:cursor-not-allowed disabled:bg-slate-50"
+                />
+              </div>
             </div>
           </div>
         </div>

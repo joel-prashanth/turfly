@@ -10,12 +10,13 @@ function PublicRoute({ children }) {
   }
 
   if (user) {
-    return (
-      <Navigate
-        to={user.role === "OWNER" ? "/owner/dashboard" : "/turfs"}
-        replace
-      />
-    );
+    const fallback =
+      user.role === "OWNER"
+        ? "/owner/dashboard"
+        : user.role === "ADMIN"
+          ? "/admin/dashboard"
+          : "/turfs";
+    return <Navigate to={fallback} replace />;
   }
 
   return children;

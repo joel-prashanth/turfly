@@ -2,6 +2,9 @@ const prisma = require("../../config/prisma");
 const {
   releaseExpiredBookings,
 } = require("../bookings/bookingLifecycle.service");
+const {
+  releaseExpiredPendingBookings,
+} = require("../bookings/booking.service");
 
 const getOwnedSlot = async (slotId, ownerId) => {
   const slot = await prisma.slot.findUnique({
@@ -37,27 +40,62 @@ const calculateSlotAmount = (startTime, endTime, pricePerHour) => {
   const durationMs = end.getTime() - start.getTime();
   const durationHours = durationMs / (1000 * 60 * 60);
 
-  return Math.round(durationHours * pricePerHour);
+  return Math.round(durationHours * Number(pricePerHour || 0));
 };
 
-const formatConfirmedBooking = (slot, pricePerHour) => {
-  if (!slot.booking || slot.booking.status !== "CONFIRMED") {
+const getPublicSlotStatus = (slot) => {
+  const now = new Date();
+  const start = new Date(slot.startTime);
+  const end = new Date(slot.endTime);
+
+  if (slot.status === "AVAILABLE" && now >= end) {
+    return "EXPIRED";
+  }
+
+  if (slot.status === "AVAILABLE" && now >= start && now < end) {
+    return "LIVE";
+  }
+
+  return slot.status;
+};
+
+const formatSlotBooking = (slot, pricePerHour, options = {}) => {
+  const { includePending = false } = options;
+
+  const booking = slot.bookings?.find((item) => {
+    if (item.status === "CONFIRMED") return true;
+    if (item.status === "COMPLETED") return true;
+    if (includePending && item.status === "PENDING") return true;
+    return false;
+  });
+
+  if (!booking) {
     return null;
   }
 
   return {
-    id: slot.booking.id,
-    status: slot.booking.status,
-    createdAt: slot.booking.createdAt,
-    amount: calculateSlotAmount(slot.startTime, slot.endTime, pricePerHour),
+    id: booking.id,
+    status: booking.status,
+    createdAt: booking.createdAt,
+    amount:
+      booking.amount ||
+      calculateSlotAmount(slot.startTime, slot.endTime, pricePerHour),
 
-    player: slot.booking.player
+    payment: booking.payment
       ? {
-          id: slot.booking.player.id,
-          name: slot.booking.player.name,
-          email: slot.booking.player.email,
-          phone: slot.booking.player.phone,
+          id: booking.payment.id,
+          status: booking.payment.status,
+          provider: booking.payment.provider,
+          amount: booking.payment.amount,
+          currency: booking.payment.currency,
+          razorpayOrderId: booking.payment.razorpayOrderId,
         }
+      : null,
+
+    player: booking.player
+      ? { id: booking.player.id, name: booking.player.name, email: booking.player.email, phone: booking.player.phone }
+      : booking.walkInName
+      ? { id: null, name: booking.walkInName, phone: booking.walkInPhone, email: null }
       : null,
   };
 };
@@ -121,8 +159,9 @@ const createSlot = async (slotData, ownerId) => {
   });
 };
 
-const getSlotsByTurfId = async (turfId) => {
+const getSlotsByTurfId = async (turfId, playerId = null) => {
   await releaseExpiredBookings();
+  await releaseExpiredPendingBookings();
 
   const turf = await prisma.turf.findUnique({
     where: {
@@ -135,7 +174,6 @@ const getSlotsByTurfId = async (turfId) => {
       location: true,
       sport: true,
       pricePerHour: true,
-
       slots: {
         orderBy: {
           startTime: "asc",
@@ -147,11 +185,34 @@ const getSlotsByTurfId = async (turfId) => {
           endTime: true,
           status: true,
 
-          booking: {
+          bookings: {
+            where: {
+              status: {
+                in: ["PENDING", "CONFIRMED", "COMPLETED"],
+              },
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
             select: {
               id: true,
               status: true,
+              amount: true,
               createdAt: true,
+              playerId: true,
+              walkInName: true,
+              walkInPhone: true,
+
+              payment: {
+                select: {
+                  id: true,
+                  status: true,
+                  provider: true,
+                  amount: true,
+                  currency: true,
+                  razorpayOrderId: true,
+                },
+              },
 
               player: {
                 select: {
@@ -185,15 +246,26 @@ const getSlotsByTurfId = async (turfId) => {
       id: slot.id,
       startTime: slot.startTime,
       endTime: slot.endTime,
-      status: slot.status,
+      status: getPublicSlotStatus(slot),
+      actualStatus: slot.status,
+      isBookedByMe: playerId
+        ? slot.bookings.some(
+            (b) =>
+              b.playerId === playerId &&
+              (b.status === "CONFIRMED" || b.status === "PENDING"),
+          )
+        : false,
 
-      booking: formatConfirmedBooking(slot, turf.pricePerHour),
+      booking: formatSlotBooking(slot, turf.pricePerHour, {
+        includePending: false,
+      }),
     })),
   };
 };
 
 const getOwnerCalendar = async (ownerId, date) => {
   await releaseExpiredBookings();
+  await releaseExpiredPendingBookings();
 
   const selectedDate = date ? new Date(date) : new Date();
 
@@ -242,11 +314,32 @@ const getOwnerCalendar = async (ownerId, date) => {
           endTime: true,
           status: true,
 
-          booking: {
+          bookings: {
+            where: {
+              status: {
+                in: ["PENDING", "CONFIRMED"],
+              },
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 1,
             select: {
               id: true,
               status: true,
+              amount: true,
               createdAt: true,
+
+              payment: {
+                select: {
+                  id: true,
+                  status: true,
+                  provider: true,
+                  amount: true,
+                  currency: true,
+                  razorpayOrderId: true,
+                },
+              },
 
               player: {
                 select: {
@@ -276,7 +369,10 @@ const getOwnerCalendar = async (ownerId, date) => {
       endTime: slot.endTime,
       status: slot.status,
 
-      booking: formatConfirmedBooking(slot, turf.pricePerHour),
+      // Owner calendar can see pending reservations too.
+      booking: formatSlotBooking(slot, turf.pricePerHour, {
+        includePending: true,
+      }),
     })),
   }));
 };
@@ -378,11 +474,24 @@ const unblockSlot = async (slotId, ownerId) => {
 const deleteSlot = async (slotId, ownerId) => {
   const slot = await getOwnedSlot(slotId, ownerId);
 
-  if (slot.status !== "AVAILABLE") {
-    throw new Error("Only available slots can be deleted");
+  const now = new Date();
+  const isPast = new Date(slot.endTime) <= now;
+
+  if (!isPast && slot.status !== "AVAILABLE") {
+    throw new Error(
+      "Only available slots can be deleted. Cancel any bookings first.",
+    );
   }
 
   await prisma.$transaction([
+    prisma.payment.deleteMany({
+      where: {
+        booking: {
+          slotId: slot.id,
+        },
+      },
+    }),
+
     prisma.booking.deleteMany({
       where: {
         slotId: slot.id,
@@ -399,6 +508,103 @@ const deleteSlot = async (slotId, ownerId) => {
   return;
 };
 
+const bulkGenerateSlots = async (
+  { turfId, days, startDate, endDate, openTime, closeTime, durationMinutes },
+  ownerId,
+) => {
+  const turf = await prisma.turf.findUnique({ where: { id: turfId } });
+  if (!turf) throw new Error("Turf not found");
+  if (turf.ownerId !== ownerId) throw new Error("Not authorized");
+
+  const dur = Number(durationMinutes);
+  if (!dur || dur < 30) throw new Error("Duration must be at least 30 minutes");
+
+  const rangeStart = new Date(startDate);
+  const rangeEnd = new Date(endDate);
+  rangeStart.setHours(0, 0, 0, 0);
+  rangeEnd.setHours(23, 59, 59, 999);
+
+  if (isNaN(rangeStart) || isNaN(rangeEnd))
+    throw new Error("Invalid date range");
+  if (rangeEnd < rangeStart)
+    throw new Error("End date must be on or after start date");
+
+  const diffDays = Math.ceil(
+    (rangeEnd - rangeStart) / (1000 * 60 * 60 * 24),
+  );
+  if (diffDays > 32) throw new Error("Date range cannot exceed 30 days per generation. Run again for more.");
+
+  if (!Array.isArray(days) || days.length === 0)
+    throw new Error("Select at least one day");
+
+  const [openH, openM] = openTime.split(":").map(Number);
+  const [closeH, closeM] = closeTime.split(":").map(Number);
+  const openMinutes = openH * 60 + openM;
+  const closeMinutes = closeH * 60 + closeM;
+  if (closeMinutes <= openMinutes)
+    throw new Error("Close time must be after open time");
+  if (closeMinutes - openMinutes < dur)
+    throw new Error("Operating window is shorter than one slot duration");
+
+  // Fetch existing slots in range for overlap checking
+  const existing = await prisma.slot.findMany({
+    where: {
+      turfId,
+      startTime: { lt: rangeEnd },
+      endTime: { gt: rangeStart },
+    },
+    select: { startTime: true, endTime: true },
+  });
+
+  // Generate candidates
+  const candidates = [];
+  const cursor = new Date(rangeStart);
+
+  while (cursor <= rangeEnd) {
+    if (days.includes(cursor.getDay())) {
+      let slotStart = new Date(cursor);
+      slotStart.setHours(openH, openM, 0, 0);
+
+      while (true) {
+        const slotEnd = new Date(slotStart.getTime() + dur * 60 * 1000);
+        const endMins = slotEnd.getHours() * 60 + slotEnd.getMinutes();
+        if (endMins > closeMinutes) break;
+
+        candidates.push({
+          turfId,
+          startTime: new Date(slotStart),
+          endTime: new Date(slotEnd),
+        });
+        slotStart = slotEnd;
+      }
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  // Remove candidates that overlap any existing slot
+  const toCreate = candidates.filter(
+    (c) =>
+      !existing.some(
+        (e) => c.startTime < e.endTime && c.endTime > e.startTime,
+      ),
+  );
+
+  // Batch inserts to avoid memory pressure on large ranges
+  const BATCH = 100;
+  let created = 0;
+  for (let i = 0; i < toCreate.length; i += BATCH) {
+    const batch = toCreate.slice(i, i + BATCH);
+    const result = await prisma.slot.createMany({ data: batch });
+    created += result.count;
+  }
+
+  return {
+    created,
+    skipped: candidates.length - created,
+    total: candidates.length,
+  };
+};
+
 module.exports = {
   createSlot,
   getSlotsByTurfId,
@@ -407,4 +613,5 @@ module.exports = {
   blockSlot,
   unblockSlot,
   deleteSlot,
+  bulkGenerateSlots,
 };

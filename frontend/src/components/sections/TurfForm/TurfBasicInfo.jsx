@@ -29,7 +29,7 @@ const TurfBasicInfo = ({ formData, handleChange }) => {
         name="location"
         value={formData.location}
         onChange={handleChange}
-        placeholder="Hyderabad"
+        placeholder="e.g. Gachibowli, Hyderabad"
         required
       />
 

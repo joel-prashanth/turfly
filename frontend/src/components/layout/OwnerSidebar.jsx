@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   BarChart3,
@@ -51,9 +51,8 @@ const navItems = [
   },
   {
     label: "Settings",
-    to: "#",
+    to: "/owner/settings",
     icon: Settings,
-    disabled: true,
   },
 ];
 
@@ -288,3 +287,4 @@ function OwnerSidebar({ onNavigate }) {
 }
 
 export default OwnerSidebar;
+

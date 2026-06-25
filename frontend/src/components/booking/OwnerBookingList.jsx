@@ -6,6 +6,7 @@ import { CalendarDays } from "lucide-react";
 function OwnerBookingList({
   bookings,
   onViewDetails,
+  onAttendanceMarked,
 }) {
   if (bookings.length === 0) {
     return (
@@ -24,6 +25,7 @@ function OwnerBookingList({
           key={booking.id}
           booking={booking}
           onViewDetails={onViewDetails}
+          onAttendanceMarked={onAttendanceMarked}
         />
       ))}
     </div>

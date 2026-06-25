@@ -1,0 +1,3 @@
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "verificationDocUrl" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "verificationDocPublicId" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "verificationDocType" TEXT;

@@ -1,0 +1,4 @@
+CREATE TYPE "OwnerStatus" AS ENUM ('PENDING_REVIEW', 'ACTIVE', 'SUSPENDED');
+
+ALTER TABLE "User" ADD COLUMN "ownerStatus" "OwnerStatus" NOT NULL DEFAULT 'ACTIVE';
+ALTER TABLE "User" ADD COLUMN "ownerStatusReason" TEXT;

@@ -25,6 +25,15 @@ import OwnerCalendarPage from "./pages/OwnerCalendarPage";
 import OwnerBookingsPage from "./pages/OwnerBookingsPage";
 import ManageSlotsPage from "./pages/ManageSlotsPage";
 import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/SettingsPage";
+import PlayerProfilePage from "./pages/PlayerProfilePage";
+import NotFoundPage from "./pages/NotFoundPage";
+import AdminLayout from "./components/layout/AdminLayout";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminOwnersPage from "./pages/admin/AdminOwnersPage";
+import AdminOwnerDetailPage from "./pages/admin/AdminOwnerDetailPage";
+import AdminSetupPage from "./pages/admin/AdminSetupPage";
+import AdminReportsPage from "./pages/admin/AdminReportsPage";
 
 function App() {
   return (
@@ -71,6 +80,15 @@ function App() {
             element={
               <ProtectedRoute allowedRole="PLAYER">
                 <MyBookingsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute allowedRole="PLAYER">
+                <PlayerProfilePage />
               </ProtectedRoute>
             }
           />
@@ -158,7 +176,58 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/owner/settings"
+            element={
+              <ProtectedRoute allowedRole="OWNER">
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
+
+        {/* ================= Admin Setup (public, one-time) ================= */}
+        <Route path="/admin/setup" element={<AdminSetupPage />} />
+
+        {/* ================= Admin ================= */}
+        <Route element={<AdminLayout />}>
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/owners"
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminOwnersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/owners/:id"
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminOwnerDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/reports"
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminReportsPage />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        {/* ================= 404 ================= */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );

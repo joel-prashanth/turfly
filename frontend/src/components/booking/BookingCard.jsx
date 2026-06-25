@@ -1,15 +1,22 @@
+import { useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
   Clock,
   IndianRupee,
   MapPin,
+  QrCode,
   ReceiptText,
+  ShieldCheck,
   XCircle,
+  Zap,
 } from "lucide-react";
 
 import Button from "../ui/Button";
 import Card from "../ui/Card";
+import PaymentQrModal from "../ui/PaymentQrModal";
+import DepositPaymentModal from "./DepositPaymentModal";
+import ExtendSessionSheet from "./ExtendSessionSheet";
 
 const sportColors = {
   FOOTBALL: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -106,18 +113,49 @@ const formatPrice = (amount) =>
     maximumFractionDigits: 0,
   });
 
-function BookingCard({ booking, onCancel }) {
+function BookingCard({ booking, onCancel, onDepositPaid, onExtended }) {
+  const [showQr, setShowQr] = useState(false);
+  const [showDeposit, setShowDeposit] = useState(false);
+  const [showExtend, setShowExtend] = useState(false);
   const turf = booking.slot.turf;
+
+  // If multi-slot booking, endTime is the last extra slot's endTime
+  const extraSlots = booking.extraSlots ?? [];
+  const bookingEndTime = extraSlots.length > 0
+    ? extraSlots[extraSlots.length - 1].slot.endTime
+    : booking.slot.endTime;
+  const totalSlots = 1 + extraSlots.length;
   const status = statusConfig[booking.status] || statusConfig.PENDING;
   const StatusIcon = status.icon;
 
-  const canCancel = booking.status === "CONFIRMED";
+  const qrUrl = turf.owner?.paymentQrUrl;
+  const cancellationWindowHours = turf.cancellationWindowHours ?? 24;
+  const withinWindow =
+    cancellationWindowHours === 0
+      ? true
+      : Date.now() + cancellationWindowHours * 3600000 >
+        new Date(booking.slot.startTime).getTime();
+  const canCancel = booking.status === "CONFIRMED" && !withinWindow;
+  const cancelBlocked = booking.status === "CONFIRMED" && withinWindow;
   const amount =
     booking.amount || calculateAmount(booking.slot, turf.pricePerHour);
 
-  const paymentStatus = booking.payment?.status || "PAYMENT_SOON";
+  const paymentStatus = booking.payment?.status || null;
+  const now = new Date();
+  const slotUpcoming = new Date(booking.slot.startTime) > now;
+  const slotActive =
+    booking.status === "CONFIRMED" &&
+    new Date(booking.slot.startTime) <= now &&
+    new Date(booking.slot.endTime) > now;
+  const depositPending =
+    booking.status === "CONFIRMED" &&
+    (slotUpcoming || slotActive) &&
+    !booking.depositStatus &&
+    !booking.depositPaymentId;
+  const depositPaid = booking.depositStatus === "PAID";
 
   return (
+    <>
     <Card
       className={`
         group overflow-hidden border border-slate-200 bg-white
@@ -203,11 +241,12 @@ function BookingCard({ booking, onCancel }) {
                       <Clock className="h-4 w-4" />
                       Time
                     </div>
-
                     <p className="mt-2 text-sm font-bold leading-6 text-slate-900">
-                      {formatTime(booking.slot.startTime)} –{" "}
-                      {formatTime(booking.slot.endTime)}
+                      {formatTime(booking.slot.startTime)} – {formatTime(bookingEndTime)}
                     </p>
+                    {totalSlots > 1 && (
+                      <p className="text-xs font-semibold text-emerald-600">{totalSlots} slots</p>
+                    )}
                   </div>
 
                   <div className="rounded-2xl bg-slate-50 p-4">
@@ -215,12 +254,8 @@ function BookingCard({ booking, onCancel }) {
                       <Clock className="h-4 w-4" />
                       Duration
                     </div>
-
                     <p className="mt-2 text-sm font-bold leading-6 text-slate-900">
-                      {formatDuration(
-                        booking.slot.startTime,
-                        booking.slot.endTime
-                      )}
+                      {formatDuration(booking.slot.startTime, bookingEndTime)}
                     </p>
                   </div>
                 </div>
@@ -233,9 +268,7 @@ function BookingCard({ booking, onCancel }) {
 
                   <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
                     <ReceiptText className="h-4 w-4 text-slate-500" />
-                    {paymentStatus === "PAYMENT_SOON"
-                      ? "Payment soon"
-                      : paymentStatus}
+                    {paymentStatus ?? "Pay at venue"}
                   </div>
                 </div>
               </div>
@@ -251,6 +284,46 @@ function BookingCard({ booking, onCancel }) {
                   {status.label}
                 </span>
 
+                {slotActive && (
+                  <Button
+                    size="sm"
+                    onClick={() => setShowExtend(true)}
+                    className="animate-pulse-once bg-emerald-500 hover:bg-emerald-600"
+                  >
+                    <Zap className="h-4 w-4" />
+                    Extend Session
+                  </Button>
+                )}
+
+                {depositPaid && (
+                  <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Deposit secured
+                  </span>
+                )}
+
+                {depositPending && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowDeposit(true)}
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Pay deposit
+                  </Button>
+                )}
+
+                {booking.status === "CONFIRMED" && qrUrl && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowQr(true)}
+                  >
+                    <QrCode className="h-4 w-4" />
+                    Pay via QR
+                  </Button>
+                )}
+
                 {canCancel && (
                   <Button
                     variant="danger"
@@ -260,12 +333,48 @@ function BookingCard({ booking, onCancel }) {
                     Cancel Booking
                   </Button>
                 )}
+
+                {cancelBlocked && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs text-slate-500">
+                    Cancellation window closed
+                    {cancellationWindowHours > 0 && (
+                      <span className="block font-medium text-slate-400">
+                        ({cancellationWindowHours}h policy)
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
     </Card>
+
+    <PaymentQrModal
+      open={showQr}
+      onClose={() => setShowQr(false)}
+      qrUrl={qrUrl}
+      ownerName={turf.owner?.businessName || turf.owner?.name}
+      amount={amount}
+    />
+
+    {showDeposit && (
+      <DepositPaymentModal
+        booking={booking}
+        onSuccess={() => { setShowDeposit(false); onDepositPaid?.(); }}
+        onClose={() => setShowDeposit(false)}
+      />
+    )}
+
+    {showExtend && (
+      <ExtendSessionSheet
+        booking={booking}
+        onClose={() => setShowExtend(false)}
+        onExtended={() => { onExtended?.(); }}
+      />
+    )}
+  </>
   );
 }
 

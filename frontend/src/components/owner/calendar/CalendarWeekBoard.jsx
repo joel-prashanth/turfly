@@ -1,288 +1,270 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import {
-  Ban,
-  CalendarCheck,
-  CalendarDays,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { getOwnerCalendar } from "../../../api/slotApi";
 
-const formatDateForApi = (date) => {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
+const pad = (n) => String(n).padStart(2, "0");
+const toApiDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-  return `${year}-${month}-${day}`;
-};
+const isSameDay = (a, b) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
 
 const getStartOfWeek = (date) => {
-  const newDate = new Date(date);
-  const day = newDate.getDay();
-
-  // Monday-first week
-  const diff = day === 0 ? -6 : 1 - day;
-
-  newDate.setDate(newDate.getDate() + diff);
-  newDate.setHours(0, 0, 0, 0);
-
-  return newDate;
+  const d = new Date(date);
+  const day = d.getDay();
+  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  d.setHours(0, 0, 0, 0);
+  return d;
 };
 
-const getWeekDays = (selectedDate) => {
-  const startOfWeek = getStartOfWeek(selectedDate);
+const formatTime = (date) =>
+  new Date(date).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
 
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(startOfWeek);
-    date.setDate(startOfWeek.getDate() + index);
-    return date;
-  });
+const SLOT_COLORS = {
+  BOOKED: { bar: "bg-blue-500", pill: "bg-blue-100 text-blue-700 border-blue-200" },
+  AVAILABLE: { bar: "bg-emerald-500", pill: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  BLOCKED: { bar: "bg-slate-300", pill: "bg-slate-100 text-slate-500 border-slate-200" },
 };
 
-const formatDayLabel = (date) =>
-  date.toLocaleDateString("en-IN", {
-    weekday: "short",
-  });
+function WeekDayColumn({ day, isToday, isSelected, onSelectDay }) {
+  const { date, slots, counts } = day;
+  const total = counts.booked + counts.available + counts.blocked;
+  const bookedRatio = total > 0 ? counts.booked / total : 0;
+  const availRatio = total > 0 ? counts.available / total : 0;
 
-const formatDateLabel = (date) =>
-  date.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-  });
+  const dayLabel = date.toLocaleDateString("en-IN", { weekday: "short" });
+  const dateNum = date.getDate();
+  const monthLabel = date.toLocaleDateString("en-IN", { month: "short" });
 
-const isSameDay = (dateA, dateB) =>
-  dateA.getFullYear() === dateB.getFullYear() &&
-  dateA.getMonth() === dateB.getMonth() &&
-  dateA.getDate() === dateB.getDate();
+  return (
+    <button
+      type="button"
+      onClick={() => onSelectDay(date)}
+      className={`
+        group flex flex-col rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md
+        ${isSelected ? "border-green-300 bg-green-50 shadow-sm" : "border-slate-200 bg-white hover:border-green-200"}
+      `}
+    >
+      {/* Day header */}
+      <div className="flex items-start justify-between gap-1">
+        <div>
+          <p className={`text-xs font-bold uppercase tracking-wide ${isSelected ? "text-green-600" : "text-slate-400"}`}>
+            {dayLabel}
+          </p>
+          <div className="mt-0.5 flex items-baseline gap-1">
+            <span className={`text-2xl font-black leading-none ${isToday ? "text-green-600" : "text-slate-900"}`}>
+              {dateNum}
+            </span>
+            <span className="text-xs font-semibold text-slate-400">{monthLabel}</span>
+          </div>
+        </div>
 
-const getCounts = (schedule = []) => {
-  const counts = {
-    total: 0,
-    available: 0,
-    booked: 0,
-    blocked: 0,
-    turfs: schedule.length,
-  };
+        {isToday && (
+          <span className="rounded-full bg-green-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            Today
+          </span>
+        )}
+      </div>
 
-  schedule.forEach((turf) => {
-    turf.slots.forEach((slot) => {
-      counts.total += 1;
+      {/* Booking fill bar */}
+      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+        {total > 0 && (
+          <div className="flex h-full">
+            <div className="bg-blue-500 transition-all" style={{ width: `${bookedRatio * 100}%` }} />
+            <div className="bg-emerald-400 transition-all" style={{ width: `${availRatio * 100}%` }} />
+          </div>
+        )}
+      </div>
 
-      if (slot.status === "AVAILABLE") counts.available += 1;
-      if (slot.status === "BOOKED") counts.booked += 1;
-      if (slot.status === "BLOCKED") counts.blocked += 1;
-    });
-  });
+      {/* Counts */}
+      {total > 0 ? (
+        <div className="mt-2 flex items-center gap-2.5 text-xs">
+          {counts.booked > 0 && (
+            <span className="flex items-center gap-1 font-semibold text-blue-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+              {counts.booked}
+            </span>
+          )}
+          {counts.available > 0 && (
+            <span className="flex items-center gap-1 font-semibold text-emerald-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              {counts.available}
+            </span>
+          )}
+          {counts.blocked > 0 && (
+            <span className="flex items-center gap-1 font-semibold text-slate-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+              {counts.blocked}
+            </span>
+          )}
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-slate-300">No slots</p>
+      )}
 
-  return counts;
-};
+      {/* Slot pills */}
+      {slots.length > 0 && (
+        <div className="mt-3 flex flex-col gap-1">
+          {slots.slice(0, 4).map((slot) => {
+            const colors = SLOT_COLORS[slot.status] || SLOT_COLORS.AVAILABLE;
+            return (
+              <div
+                key={slot.id}
+                className={`flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-semibold ${colors.pill}`}
+              >
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${colors.bar}`} />
+                <span className="truncate">
+                  {formatTime(slot.startTime)}
+                  {slot.status === "BOOKED" && (slot.booking?.player?.name || slot.booking?.walkInName)
+                    ? ` · ${(slot.booking.player?.name || slot.booking.walkInName).split(" ")[0]}`
+                    : ""}
+                </span>
+              </div>
+            );
+          })}
+          {slots.length > 4 && (
+            <p className="pl-1 text-xs text-slate-400">+{slots.length - 4} more</p>
+          )}
+        </div>
+      )}
+    </button>
+  );
+}
 
-function CalendarWeekBoard({
-  selectedDate,
-  onSelectDay,
-  selectedTurfId = "ALL",
-  selectedStatus = "ALL",
-}) {
+function CalendarWeekBoard({ selectedDate, onSelectDay, selectedTurfId = "ALL", selectedStatus = "ALL" }) {
   const [weekData, setWeekData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const weekDays = useMemo(() => getWeekDays(selectedDate), [selectedDate]);
+  const weekDays = useMemo(() => {
+    const start = getStartOfWeek(selectedDate);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+  }, [selectedDate]);
 
   const weekRangeLabel = useMemo(() => {
-    const firstDay = weekDays[0];
-    const lastDay = weekDays[6];
-
-    return `${formatDateLabel(firstDay)} - ${formatDateLabel(lastDay)}`;
+    const fmt = (d) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+    return `${fmt(weekDays[0])} – ${fmt(weekDays[6])}`;
   }, [weekDays]);
 
   useEffect(() => {
-    const fetchWeekSchedule = async () => {
-      try {
-        setLoading(true);
+    let cancelled = false;
 
+    const fetchWeek = async () => {
+      setLoading(true);
+      try {
         const results = await Promise.all(
           weekDays.map(async (date) => {
-            const dateString = formatDateForApi(date);
-            const response = await getOwnerCalendar(dateString);
+            const dateStr = toApiDate(date);
+            const res = await getOwnerCalendar(dateStr);
+            if (cancelled) return null;
 
-            const schedule = response.data.schedule || [];
-
-            const filteredSchedule = schedule
-              .filter(
-                (turf) =>
-                  selectedTurfId === "ALL" || turf.id === selectedTurfId,
-              )
-              .map((turf) => ({
-                ...turf,
-                slots: turf.slots.filter(
-                  (slot) =>
-                    selectedStatus === "ALL" || slot.status === selectedStatus,
-                ),
+            const schedule = (res.data.schedule || [])
+              .filter((t) => selectedTurfId === "ALL" || t.id === selectedTurfId)
+              .map((t) => ({
+                ...t,
+                slots: t.slots.filter((s) => selectedStatus === "ALL" || s.status === selectedStatus),
               }))
-              .filter((turf) => turf.slots.length > 0);
+              .filter((t) => t.slots.length > 0);
 
-            return {
-              date,
-              dateString,
-              schedule: filteredSchedule,
-              counts: getCounts(filteredSchedule),
-            };
+            const slots = schedule
+              .flatMap((t) => t.slots.map((s) => ({ ...s, turfName: t.name })))
+              .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+            const counts = { booked: 0, available: 0, blocked: 0 };
+            slots.forEach((s) => {
+              if (s.status === "BOOKED") counts.booked++;
+              else if (s.status === "AVAILABLE") counts.available++;
+              else if (s.status === "BLOCKED") counts.blocked++;
+            });
+
+            return { date, slots, counts };
           }),
         );
 
-        setWeekData(results);
-      } catch (error) {
-        toast.error(
-          error.response?.data?.message || "Failed to load week schedule.",
-        );
+        if (!cancelled) setWeekData(results.filter(Boolean));
+      } catch {
+        if (!cancelled) toast.error("Failed to load week schedule.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    fetchWeekSchedule();
+    fetchWeek();
+    return () => { cancelled = true; };
   }, [weekDays, selectedTurfId, selectedStatus]);
 
-  if (loading) {
-    return (
-      <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-3 text-slate-500">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <p className="text-sm font-medium">Loading week view...</p>
-        </div>
+  const today = new Date();
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7">
-          {Array.from({ length: 7 }).map((_, index) => (
-            <div
-              key={index}
-              className="h-56 animate-pulse rounded-3xl bg-slate-100"
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const totalBooked = weekData.reduce((n, d) => n + d.counts.booked, 0);
+  const totalAvail = weekData.reduce((n, d) => n + d.counts.available, 0);
 
   return (
-    <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+    <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-            Week View
-          </p>
-
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
-            {weekRangeLabel}
-          </h2>
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Week View</p>
+          <h2 className="mt-0.5 text-lg font-bold text-slate-900">{weekRangeLabel}</h2>
         </div>
 
-        <p className="text-sm text-slate-500">
-          Click any day to manage slots in Day View.
-        </p>
+        {loading ? (
+          <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+        ) : (
+          <div className="flex items-center gap-3 text-sm">
+            {totalBooked > 0 && (
+              <span className="flex items-center gap-1.5 font-semibold text-blue-600">
+                <span className="h-2 w-2 rounded-full bg-blue-500" />
+                {totalBooked} booked
+              </span>
+            )}
+            {totalAvail > 0 && (
+              <span className="flex items-center gap-1.5 font-semibold text-emerald-600">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                {totalAvail} open
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7">
-        {weekData.map((day) => {
-          const today = isSameDay(day.date, new Date());
-          const selected = isSameDay(day.date, selectedDate);
-          const hasSlots = day.counts.total > 0;
+      {/* Day columns */}
+      <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 xl:grid-cols-7">
+        {loading
+          ? Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="h-40 animate-pulse rounded-2xl bg-slate-100" />
+            ))
+          : weekData.map((day) => (
+              <WeekDayColumn
+                key={toApiDate(day.date)}
+                day={day}
+                isToday={isSameDay(day.date, today)}
+                isSelected={isSameDay(day.date, selectedDate)}
+                onSelectDay={onSelectDay}
+              />
+            ))}
+      </div>
 
-          return (
-            <button
-              key={day.dateString}
-              type="button"
-              onClick={() => onSelectDay?.(day.date)}
-              className={`group rounded-3xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${
-                selected
-                  ? "border-green-300 bg-green-50"
-                  : "border-slate-200 bg-white hover:border-green-200"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p
-                    className={`text-sm font-bold uppercase tracking-wide ${
-                      selected ? "text-green-700" : "text-slate-400"
-                    }`}
-                  >
-                    {formatDayLabel(day.date)}
-                  </p>
-
-                  <h3 className="mt-1 text-xl font-black text-slate-950">
-                    {formatDateLabel(day.date)}
-                  </h3>
-                </div>
-
-                {today && (
-                  <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
-                    Today
-                  </span>
-                )}
-              </div>
-
-              <div className="mt-5 rounded-2xl bg-slate-50 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2 text-sm font-semibold text-slate-600">
-                    <CalendarDays className="h-4 w-4" />
-                    Total
-                  </span>
-
-                  <span className="text-lg font-black text-slate-950">
-                    {day.counts.total}
-                  </span>
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2 font-medium text-emerald-700">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Available
-                    </span>
-                    <span className="font-bold text-emerald-700">
-                      {day.counts.available}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2 font-medium text-blue-700">
-                      <CalendarCheck className="h-4 w-4" />
-                      Booked
-                    </span>
-                    <span className="font-bold text-blue-700">
-                      {day.counts.booked}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2 font-medium text-red-700">
-                      <Ban className="h-4 w-4" />
-                      Blocked
-                    </span>
-                    <span className="font-bold text-red-700">
-                      {day.counts.blocked}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  {day.counts.turfs} turf{day.counts.turfs !== 1 ? "s" : ""}
-                </p>
-
-                <span
-                  className={`text-xs font-bold ${
-                    hasSlots ? "text-green-700" : "text-slate-400"
-                  }`}
-                >
-                  {hasSlots ? "Manage day" : "No slots"}
-                </span>
-              </div>
-            </button>
-          );
-        })}
+      {/* Legend */}
+      <div className="flex items-center gap-4 border-t border-slate-100 px-5 py-3">
+        <span className="text-xs text-slate-400">Click any day to manage slots</span>
+        <div className="ml-auto flex items-center gap-3">
+          {[
+            { color: "bg-blue-500", label: "Booked" },
+            { color: "bg-emerald-500", label: "Open" },
+            { color: "bg-slate-300", label: "Blocked" },
+          ].map(({ color, label }) => (
+            <div key={label} className="flex items-center gap-1.5">
+              <span className={`h-2 w-2 rounded-full ${color}`} />
+              <span className="text-xs text-slate-500">{label}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

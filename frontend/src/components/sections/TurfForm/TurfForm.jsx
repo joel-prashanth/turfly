@@ -24,6 +24,7 @@ function TurfForm({ mode = "create", turfId = null }) {
     location: "",
     sport: "FOOTBALL",
     pricePerHour: "",
+    cancellationWindowHours: 24,
     image: {
       url: "",
       publicId: "",
@@ -49,6 +50,7 @@ function TurfForm({ mode = "create", turfId = null }) {
           location: turf.location,
           sport: turf.sport,
           pricePerHour: turf.pricePerHour,
+          cancellationWindowHours: turf.cancellationWindowHours ?? 24,
           image: {
             url: turf.imageUrl || "",
             publicId: turf.imagePublicId || "",
@@ -106,6 +108,7 @@ function TurfForm({ mode = "create", turfId = null }) {
         location: formData.location,
         sport: formData.sport,
         pricePerHour: Number(formData.pricePerHour),
+        cancellationWindowHours: Number(formData.cancellationWindowHours),
         imageUrl: formData.image.url,
         imagePublicId: formData.image.publicId,
         isActive: formData.isActive,

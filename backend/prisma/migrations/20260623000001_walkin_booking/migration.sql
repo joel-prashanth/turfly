@@ -1,0 +1,3 @@
+ALTER TABLE "Booking" ALTER COLUMN "playerId" DROP NOT NULL;
+ALTER TABLE "Booking" ADD COLUMN "walkInName" TEXT;
+ALTER TABLE "Booking" ADD COLUMN "walkInPhone" TEXT;

@@ -10,6 +10,7 @@ const {
   getTurfById,
   deleteTurfController,
   updateTurfController,
+  setListingStatusController,
 } = require("./turf.controller");
 
 const router = express.Router();
@@ -23,6 +24,8 @@ router.get("/my", authenticate, authorize("OWNER"), getMyTurfs);
 router.post("/", authenticate, authorize("OWNER"), createTurf);
 
 router.put("/:id", authenticate, authorize("OWNER"), updateTurfController);
+
+router.patch("/:id/listing", authenticate, authorize("OWNER"), setListingStatusController);
 
 router.delete("/:id", authenticate, authorize("OWNER"), deleteTurfController);
 

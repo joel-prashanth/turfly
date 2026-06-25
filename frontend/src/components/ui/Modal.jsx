@@ -1,6 +1,13 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 
+const sizeClass = {
+  sm: "max-w-md",
+  md: "max-w-lg",
+  lg: "max-w-2xl",
+  xl: "max-w-3xl",
+};
+
 const Modal = ({
   open,
   title,
@@ -9,6 +16,7 @@ const Modal = ({
   onClose,
   closeOnBackdrop = true,
   closeOnEscape = true,
+  size = "xl",
 }) => {
   useEffect(() => {
     if (!open) return;
@@ -40,17 +48,23 @@ const Modal = ({
         aria-modal="true"
         aria-labelledby={title ? "modal-title" : undefined}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+        className={`flex w-full flex-col ${sizeClass[size] ?? sizeClass.xl} max-h-[90vh] rounded-2xl border border-slate-200 bg-white shadow-2xl`}
       >
         {title && (
-          <h2 id="modal-title" className="text-2xl font-bold text-slate-900">
-            {title}
-          </h2>
+          <div className="shrink-0 border-b border-slate-100 px-6 py-4">
+            <h2 id="modal-title" className="text-xl font-bold text-slate-900">
+              {title}
+            </h2>
+          </div>
         )}
 
-        <div className={title ? "mt-6" : ""}>{children}</div>
+        <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
 
-        {footer && <div className="mt-8 flex justify-end gap-3">{footer}</div>}
+        {footer && (
+          <div className="shrink-0 border-t border-slate-100 px-6 py-4">
+            {footer}
+          </div>
+        )}
       </div>
     </div>,
     document.body,

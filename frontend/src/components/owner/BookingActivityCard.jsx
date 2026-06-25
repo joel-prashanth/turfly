@@ -5,6 +5,8 @@ import Card from "../ui/Card";
 function BookingActivityCard({ booking }) {
   const { player, slot, status } = booking;
 
+  const playerName = player?.name || booking.walkInName || "Walk-in";
+
   const start = new Date(slot.startTime);
   const end = new Date(slot.endTime);
 
@@ -24,9 +26,9 @@ function BookingActivityCard({ booking }) {
     minute: "2-digit",
   });
 
-  const initials = player.name
+  const initials = playerName
     .split(" ")
-    .map((name) => name[0])
+    .map((n) => n[0])
     .join("")
     .toUpperCase();
 
@@ -47,7 +49,7 @@ function BookingActivityCard({ booking }) {
 
           <div>
             <h3 className="text-base font-semibold text-slate-900">
-              {player.name}
+              {playerName}
             </h3>
 
             <p className="mt-1 text-sm text-slate-600">

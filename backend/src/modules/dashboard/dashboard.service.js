@@ -229,11 +229,12 @@ const getOwnerTodayCalendar = async (ownerId) => {
           endTime: true,
           status: true,
 
-          booking: {
+          bookings: {
+            where: { status: "CONFIRMED" },
+            take: 1,
             select: {
               id: true,
               status: true,
-
               player: {
                 select: {
                   id: true,
@@ -253,7 +254,7 @@ const getOwnerTodayCalendar = async (ownerId) => {
     slots: turf.slots.map((slot) => ({
       ...slot,
 
-      booking: slot.booking?.status === "CONFIRMED" ? slot.booking : null,
+      booking: slot.bookings?.[0] ?? null,
     })),
   }));
 };

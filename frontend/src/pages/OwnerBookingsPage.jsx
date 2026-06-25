@@ -68,6 +68,7 @@ function OwnerBookingsPage() {
             setSelectedBooking(booking);
             setIsDetailsOpen(true);
           }}
+          onAttendanceMarked={fetchBookings}
         />
       )}
       <BookingDetailsModal
@@ -76,6 +77,11 @@ function OwnerBookingsPage() {
         onClose={() => {
           setIsDetailsOpen(false);
           setSelectedBooking(null);
+        }}
+        onCancelled={() => {
+          setIsDetailsOpen(false);
+          setSelectedBooking(null);
+          fetchBookings();
         }}
       />
     </Container>

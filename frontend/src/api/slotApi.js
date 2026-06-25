@@ -41,3 +41,8 @@ export const deleteSlot = async (slotId) => {
   const response = await api.delete(`/slots/${slotId}`);
   return response.data;
 };
+
+export const bulkGenerateSlots = async (data) => {
+  const response = await api.post("/slots/bulk-generate", data);
+  return response.data;
+};

@@ -1,7 +1,7 @@
 import BaseLayout from "./BaseLayout";
 
 function PublicLayout() {
-  return <BaseLayout className="bg-white" />;
+  return <BaseLayout />;
 }
 
 export default PublicLayout;

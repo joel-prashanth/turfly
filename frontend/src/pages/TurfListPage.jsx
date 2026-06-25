@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import useDebounce from "../hooks/useDebounce";
 import {
   MapPin,
   Search,
@@ -34,10 +35,17 @@ export default function TurfListPage() {
   const [turfs, setTurfs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const search = searchParams.get("search") || "";
-  const sport = searchParams.get("sport") || "";
+  const [searchInput, setSearchInput] = useState(
+    () => searchParams.get("search") || "",
+  );
+  const debouncedSearch = useDebounce(searchInput, 400);
 
-  const hasActiveFilters = Boolean(search || sport);
+  const sport = searchParams.get("sport") || "";
+  const minPrice = searchParams.get("minPrice") || "";
+  const maxPrice = searchParams.get("maxPrice") || "";
+  const sort = searchParams.get("sort") || "";
+
+  const hasActiveFilters = Boolean(debouncedSearch || sport || minPrice || maxPrice || sort);
 
   const pageTitle = useMemo(() => {
     if (sport) {
@@ -53,8 +61,11 @@ export default function TurfListPage() {
         setLoading(true);
 
         const data = await getTurfs({
-          search,
+          search: debouncedSearch,
           sport,
+          minPrice,
+          maxPrice,
+          sort,
         });
 
         setTurfs(data.turfs || []);
@@ -66,7 +77,7 @@ export default function TurfListPage() {
     };
 
     fetchTurfs();
-  }, [search, sport]);
+  }, [debouncedSearch, sport, minPrice, maxPrice, sort]);
 
   const updateFilters = (updates) => {
     const params = new URLSearchParams(searchParams);
@@ -83,6 +94,7 @@ export default function TurfListPage() {
   };
 
   const clearFilters = () => {
+    setSearchInput("");
     setSearchParams({});
   };
 
@@ -138,18 +150,16 @@ export default function TurfListPage() {
 
               <div className="mt-5">
                 <TurfFilters
-                  search={search}
+                  search={searchInput}
                   sport={sport}
-                  onSearchChange={(value) =>
-                    updateFilters({
-                      search: value,
-                    })
-                  }
-                  onSportChange={(value) =>
-                    updateFilters({
-                      sport: value,
-                    })
-                  }
+                  minPrice={minPrice}
+                  maxPrice={maxPrice}
+                  sort={sort}
+                  onSearchChange={setSearchInput}
+                  onSportChange={(v) => updateFilters({ sport: v })}
+                  onMinPriceChange={(v) => updateFilters({ minPrice: v })}
+                  onMaxPriceChange={(v) => updateFilters({ maxPrice: v })}
+                  onSortChange={(v) => updateFilters({ sort: v })}
                 />
               </div>
 
@@ -215,9 +225,20 @@ export default function TurfListPage() {
                 key={turf.id}
                 turf={turf}
                 actions={
-                  <Link to={`/turfs/${turf.id}`} className="block">
-                    <Button className="w-full">View Slots</Button>
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link to={`/turfs/${turf.id}`} className="flex-1">
+                      <Button className="w-full">View Slots</Button>
+                    </Link>
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${turf.name} ${turf.location}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Get Directions"
+                      className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700"
+                    >
+                      <MapPin size={18} />
+                    </a>
+                  </div>
                 }
               />
             ))}

@@ -35,4 +35,25 @@ router.patch(
   bookingController.cancelBooking,
 );
 
+router.patch(
+  "/:id/owner-cancel",
+  authenticate,
+  authorize("OWNER"),
+  bookingController.ownerCancelBooking,
+);
+
+router.post(
+  "/manual",
+  authenticate,
+  authorize("OWNER"),
+  bookingController.createManualBooking,
+);
+
+router.get(
+  "/:id/extend-options",
+  authenticate,
+  authorize("PLAYER"),
+  bookingController.getExtendOptions,
+);
+
 module.exports = router;

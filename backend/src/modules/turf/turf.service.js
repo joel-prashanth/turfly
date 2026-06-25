@@ -13,6 +13,7 @@ const createTurf = async (turfData) => {
     sport,
     imageUrl,
     ownerId,
+    cancellationWindowHours,
   } = turfData;
 
   if (!name || !location || !pricePerHour || !sport) {
@@ -23,6 +24,9 @@ const createTurf = async (turfData) => {
     throw new Error("Price per hour must be greater than 0.");
   }
 
+  const windowHours = cancellationWindowHours !== undefined ? Number(cancellationWindowHours) : 24;
+  if (windowHours < 0) throw new Error("Cancellation window cannot be negative.");
+
   const newTurf = await prisma.turf.create({
     data: {
       name,
@@ -32,6 +36,7 @@ const createTurf = async (turfData) => {
       sport,
       imageUrl,
       ownerId,
+      cancellationWindowHours: windowHours,
     },
   });
 
@@ -39,14 +44,32 @@ const createTurf = async (turfData) => {
 };
 
 const getMyTurfs = async (ownerId) => {
-  return prisma.turf.findMany({
-    where: {
-      ownerId,
-    },
-    orderBy: {
-      createdAt: "desc",
+  const now = new Date();
+
+  const turfs = await prisma.turf.findMany({
+    where: { ownerId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      _count: {
+        select: {
+          slots: {
+            where: {
+              endTime: { gt: now },
+              bookings: {
+                some: { status: "CONFIRMED" },
+              },
+            },
+          },
+        },
+      },
     },
   });
+
+  return turfs.map((turf) => ({
+    ...turf,
+    upcomingBookedSlots: turf._count.slots,
+    _count: undefined,
+  }));
 };
 
 const getAllTurfs = async (filters = {}) => {
@@ -54,6 +77,7 @@ const getAllTurfs = async (filters = {}) => {
 
   const where = {
     isActive: true,
+    owner: { ownerStatus: "ACTIVE" },
   };
 
   if (sport) {
@@ -126,9 +150,18 @@ const getAllTurfs = async (filters = {}) => {
   return prisma.turf.findMany({
     where,
     orderBy,
-    ...(limit && {
-      take: Number(limit),
-    }),
+    ...(limit && { take: Number(limit) }),
+    include: {
+      owner: {
+        select: {
+          id: true,
+          name: true,
+          avatarUrl: true,
+          businessName: true,
+          paymentQrUrl: true,
+        },
+      },
+    },
   });
 };
 
@@ -138,8 +171,17 @@ const getTurfById = async (turfId) => {
   }
 
   const turf = await prisma.turf.findUnique({
-    where: {
-      id: turfId,
+    where: { id: turfId },
+    include: {
+      owner: {
+        select: {
+          id: true,
+          name: true,
+          avatarUrl: true,
+          businessName: true,
+          paymentQrUrl: true,
+        },
+      },
     },
   });
 
@@ -161,7 +203,10 @@ const deleteTurf = async (turfId, ownerId) => {
     include: {
       slots: {
         include: {
-          booking: true,
+          bookings: {
+            where: { status: "CONFIRMED" },
+            select: { status: true },
+          },
         },
       },
     },
@@ -175,25 +220,6 @@ const deleteTurf = async (turfId, ownerId) => {
     throw new Error("You are not authorized to delete this turf.");
   }
 
-  const now = new Date();
-
-  const hasActiveBookings = turf.slots.some((slot) => {
-    if (!slot.booking) {
-      return false;
-    }
-
-    return (
-      slot.booking.status === "CONFIRMED" &&
-      slot.endTime > now
-    );
-  });
-
-  if (hasActiveBookings) {
-    throw new Error(
-      "This turf has upcoming bookings and cannot be deleted."
-    );
-  }
-
   if (turf.imagePublicId) {
     try {
       await uploadService.deleteImage(turf.imagePublicId);
@@ -202,25 +228,36 @@ const deleteTurf = async (turfId, ownerId) => {
     }
   }
 
+  const now = new Date();
+
   await prisma.$transaction([
-    prisma.booking.deleteMany({
+    // Cancel any upcoming confirmed/pending bookings (preserve history)
+    prisma.booking.updateMany({
       where: {
-        slot: {
-          turfId,
-        },
+        slot: { turfId, endTime: { gt: now } },
+        status: { in: ["CONFIRMED", "PENDING"] },
       },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: now,
+      },
+    }),
+
+    // Delete payments then bookings (FK order)
+    prisma.payment.deleteMany({
+      where: { booking: { slot: { turfId } } },
+    }),
+
+    prisma.booking.deleteMany({
+      where: { slot: { turfId } },
     }),
 
     prisma.slot.deleteMany({
-      where: {
-        turfId,
-      },
+      where: { turfId },
     }),
 
     prisma.turf.delete({
-      where: {
-        id: turfId,
-      },
+      where: { id: turfId },
     }),
   ]);
 
@@ -253,6 +290,7 @@ const updateTurf = async (turfId, ownerId, turfData) => {
     imageUrl,
     imagePublicId,
     isActive,
+    cancellationWindowHours,
   } = turfData;
 
   if (!name || !location || !sport) {
@@ -262,6 +300,9 @@ const updateTurf = async (turfId, ownerId, turfData) => {
   if (Number(pricePerHour) <= 0) {
     throw new Error("Price per hour must be greater than 0.");
   }
+
+  const windowHours = cancellationWindowHours !== undefined ? Number(cancellationWindowHours) : turf.cancellationWindowHours;
+  if (windowHours < 0) throw new Error("Cancellation window cannot be negative.");
 
   const oldPublicId = turf.imagePublicId;
 
@@ -278,6 +319,7 @@ const updateTurf = async (turfId, ownerId, turfData) => {
       imageUrl,
       imagePublicId,
       isActive,
+      cancellationWindowHours: windowHours,
     },
   });
 
@@ -295,6 +337,18 @@ const updateTurf = async (turfId, ownerId, turfData) => {
   return updatedTurf;
 };
 
+const setListingStatus = async (turfId, ownerId, isActive) => {
+  const turf = await prisma.turf.findUnique({ where: { id: turfId } });
+
+  if (!turf) throw new Error("Turf not found.");
+  if (turf.ownerId !== ownerId) throw new Error("Not authorized.");
+
+  return prisma.turf.update({
+    where: { id: turfId },
+    data: { isActive },
+  });
+};
+
 module.exports = {
   createTurf,
   getMyTurfs,
@@ -302,4 +356,5 @@ module.exports = {
   getTurfById,
   updateTurf,
   deleteTurf,
+  setListingStatus,
 };

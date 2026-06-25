@@ -1,4 +1,4 @@
-import { MapPin, IndianRupee, Star } from "lucide-react";
+import { MapPin, IndianRupee, Star, Navigation2 } from "lucide-react";
 
 import Card from "../ui/Card";
 import turfImages from "../../utils/turfImages";
@@ -55,6 +55,15 @@ function TurfInfo({ turf }) {
               <div className="flex items-center gap-2">
                 <MapPin size={18} className="text-slate-400" />
                 <span>{turf.location}</span>
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${turf.name} ${turf.location}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                >
+                  <Navigation2 size={12} />
+                  Get Directions
+                </a>
               </div>
 
               <div className="flex items-center gap-2">

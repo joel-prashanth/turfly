@@ -20,7 +20,7 @@ import DeleteConfirmationModal from "../components/modals/DeleteConfirmationModa
 import TurfCardSkeleton from "../components/skeletons/TurfCardSkeleton";
 import TurfCard from "../components/turf/TurfCard";
 
-import { getMyTurfs, deleteTurf } from "../api/turfApi";
+import { getMyTurfs, deleteTurf, setTurfListingStatus } from "../api/turfApi";
 
 function MyTurfsPage() {
   const navigate = useNavigate();
@@ -30,10 +30,28 @@ function MyTurfsPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [search, setSearch] = useState("");
 
+  const [togglingId, setTogglingId] = useState(null);
+
+  const handleToggleListing = async (turf) => {
+    setTogglingId(turf.id);
+    const next = !turf.isActive;
+    setTurfs((prev) => prev.map((t) => t.id === turf.id ? { ...t, isActive: next } : t));
+    try {
+      await setTurfListingStatus(turf.id, next);
+      toast.success(next ? `${turf.name} is now listed.` : `${turf.name} unlisted.`);
+    } catch {
+      setTurfs((prev) => prev.map((t) => t.id === turf.id ? { ...t, isActive: !next } : t));
+      toast.error("Failed to update listing status.");
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const [deleteModal, setDeleteModal] = useState({
     open: false,
     id: null,
     name: null,
+    upcomingBookedSlots: 0,
   });
 
   const fetchTurfs = async () => {
@@ -55,11 +73,12 @@ function MyTurfsPage() {
     turf.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const handleDelete = (id, name) => {
+  const handleDelete = (id, name, upcomingBookedSlots) => {
     setDeleteModal({
       open: true,
       id,
       name,
+      upcomingBookedSlots: upcomingBookedSlots ?? 0,
     });
   };
 
@@ -81,6 +100,7 @@ function MyTurfsPage() {
         open: false,
         id: null,
         name: null,
+        upcomingBookedSlots: 0,
       });
     }
   };
@@ -143,7 +163,33 @@ function MyTurfsPage() {
               key={turf.id}
               turf={turf}
               actions={
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+
+                  {/* Listing toggle */}
+                  <button
+                    onClick={() => handleToggleListing(turf)}
+                    disabled={togglingId === turf.id}
+                    className={[
+                      "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
+                      turf.isActive
+                        ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                        : "border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100",
+                      togglingId === turf.id ? "opacity-50 cursor-not-allowed" : "",
+                    ].join(" ")}
+                  >
+                    {/* Toggle pill */}
+                    <span className={[
+                      "relative inline-flex h-4 w-7 shrink-0 rounded-full transition-colors duration-200",
+                      turf.isActive ? "bg-green-500" : "bg-gray-300",
+                    ].join(" ")}>
+                      <span className={[
+                        "absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform duration-200",
+                        turf.isActive ? "translate-x-3.5" : "translate-x-0.5",
+                      ].join(" ")} />
+                    </span>
+                    {turf.isActive ? "Listed" : "Unlisted"}
+                  </button>
+
                   <Link to={`/owner/turfs/${turf.id}/slots`}>
                     <Button size="sm">
                       <CalendarDays size={16} className="mr-2" />
@@ -158,14 +204,13 @@ function MyTurfsPage() {
                     </Button>
                   </Link>
 
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleDelete(turf.id, turf.name)}
+                  <button
+                    title="Delete turf"
+                    onClick={() => handleDelete(turf.id, turf.name, turf.upcomingBookedSlots)}
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-red-200 text-red-500 transition-colors hover:bg-red-50 hover:border-red-300 hover:text-red-600"
                   >
-                    <Trash2 size={16} className="mr-2" />
-                    Delete Turf
-                  </Button>
+                    <Trash2 size={15} />
+                  </button>
                 </div>
               }
             />
@@ -177,11 +222,17 @@ function MyTurfsPage() {
         open={deleteModal.open}
         loading={deleteLoading}
         itemName={deleteModal.name || "turf"}
+        warning={
+          deleteModal.upcomingBookedSlots > 0
+            ? `This turf has ${deleteModal.upcomingBookedSlots} upcoming booked slot${deleteModal.upcomingBookedSlots === 1 ? "" : "s"}. Those bookings will be cancelled when you delete.`
+            : undefined
+        }
         onClose={() =>
           setDeleteModal({
             open: false,
             id: null,
             name: null,
+            upcomingBookedSlots: 0,
           })
         }
         onConfirm={confirmDelete}

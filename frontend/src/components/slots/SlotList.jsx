@@ -1,7 +1,7 @@
 import EmptyState from "../ui/EmptyState";
 import SlotRow from "./SlotRow";
 
-function SlotList({ slots, refreshSlots, onEdit }) {
+function SlotList({ slots, pricePerHour, refreshSlots, onEdit, onWalkIn }) {
   if (slots.length === 0) {
     return (
       <EmptyState
@@ -17,8 +17,10 @@ function SlotList({ slots, refreshSlots, onEdit }) {
         <SlotRow
           key={slot.id}
           slot={slot}
+          pricePerHour={pricePerHour}
           refreshSlots={refreshSlots}
           onEdit={onEdit}
+          onWalkIn={onWalkIn}
         />
       ))}
     </div>

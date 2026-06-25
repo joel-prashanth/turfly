@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, ChevronDown, LogOut, Menu, Settings, User } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Settings, User } from "lucide-react";
+import NotificationBell from "./NotificationBell";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -85,14 +86,7 @@ function OwnerTopbar({ onMenuClick }) {
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          className="relative hidden rounded-2xl border border-slate-200 bg-white p-3 text-slate-600 shadow-sm transition hover:bg-slate-50 sm:block"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full border-2 border-white bg-green-500" />
-        </button>
+        <NotificationBell light />
 
         <div ref={dropdownRef} className="relative">
           <button
@@ -146,12 +140,12 @@ function OwnerTopbar({ onMenuClick }) {
                 type="button"
                 onClick={() => {
                   setDropdownOpen(false);
-                  toast("Settings coming soon.");
+                  navigate("/owner/settings");
                 }}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
                 <Settings className="h-4 w-4 text-slate-500" />
-                Settings Soon
+                Settings
               </button>
 
               <div className="my-2 border-t border-slate-100" />

@@ -6,7 +6,6 @@ import {
   CalendarClock,
   CheckCircle2,
   History,
-  IndianRupee,
   XCircle,
 } from "lucide-react";
 
@@ -137,6 +136,8 @@ export default function MyBookingsPage() {
             booking,
           })
         }
+        onDepositPaid={fetchBookings}
+        onExtended={fetchBookings}
       />
     ));
 
@@ -304,26 +305,6 @@ export default function MyBookingsPage() {
             </Card>
           </div>
 
-          <Card className="mb-10 rounded-3xl border-amber-200 bg-amber-50 p-5">
-            <div className="flex gap-4">
-              <div className="rounded-2xl bg-amber-100 p-3 text-amber-700">
-                <IndianRupee className="h-5 w-5" />
-              </div>
-
-              <div>
-                <h3 className="font-bold text-amber-900">
-                  Payments coming soon
-                </h3>
-
-                <p className="mt-1 text-sm leading-6 text-amber-800">
-                  Current bookings are confirmed directly. In the Razorpay
-                  sprint, this page will also show payment status, transaction
-                  details, and failed payment recovery.
-                </p>
-              </div>
-            </div>
-          </Card>
-
           <div className="space-y-12">
             {renderSection({
               title: "Upcoming Bookings",
@@ -355,7 +336,16 @@ export default function MyBookingsPage() {
       <ConfirmDialog
         open={cancelDialog.open}
         title="Cancel Booking"
-        description="Are you sure you want to cancel this booking? This slot will become available for other players again."
+        description={(() => {
+          const w = cancelDialog.booking?.slot?.turf?.cancellationWindowHours;
+          const policy =
+            w === 0
+              ? "This venue does not allow cancellations."
+              : w != null
+                ? `This venue requires cancellations at least ${w} hour${w === 1 ? "" : "s"} before the slot starts.`
+                : "";
+          return `Are you sure you want to cancel this booking? This slot will become available for other players again.${policy ? " " + policy : ""}`;
+        })()}
         confirmText="Cancel Booking"
         danger
         loading={cancelLoading}

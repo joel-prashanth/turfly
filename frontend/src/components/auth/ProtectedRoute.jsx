@@ -14,12 +14,13 @@ function ProtectedRoute({ children, allowedRole }) {
   }
 
   if (allowedRole && user.role !== allowedRole) {
-    return (
-      <Navigate
-        to={user.role === "OWNER" ? "/owner/dashboard" : "/turfs"}
-        replace
-      />
-    );
+    const fallback =
+      user.role === "OWNER"
+        ? "/owner/dashboard"
+        : user.role === "ADMIN"
+          ? "/admin/dashboard"
+          : "/turfs";
+    return <Navigate to={fallback} replace />;
   }
 
   return children;

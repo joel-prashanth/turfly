@@ -1,10 +1,8 @@
 import api from "./axios";
 
-export const createBooking = async (slotId) => {
-  const response = await api.post("/bookings", {
-    slotId,
-  });
-
+export const createBooking = async (slotIds) => {
+  const ids = Array.isArray(slotIds) ? slotIds : [slotIds];
+  const response = await api.post("/bookings", { slotIds: ids });
   return response.data;
 };
 
@@ -33,9 +31,21 @@ export const getOwnerBookings = async ({
 };
 
 export const cancelBooking = async (bookingId) => {
-  const response = await api.patch(
-    `/bookings/${bookingId}/cancel`
-  );
+  const response = await api.patch(`/bookings/${bookingId}/cancel`);
+  return response.data;
+};
 
+export const ownerCancelBooking = async (bookingId) => {
+  const response = await api.patch(`/bookings/${bookingId}/owner-cancel`);
+  return response.data;
+};
+
+export const getExtendOptions = async (bookingId) => {
+  const response = await api.get(`/bookings/${bookingId}/extend-options`);
+  return response.data;
+};
+
+export const createManualBooking = async ({ turfId, walkInName, walkInPhone, startTime, endTime }) => {
+  const response = await api.post("/bookings/manual", { turfId, walkInName, walkInPhone, startTime, endTime });
   return response.data;
 };

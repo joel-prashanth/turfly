@@ -6,58 +6,39 @@ const releaseExpiredBookings = async () => {
   console.log("\n========== BOOKING LIFECYCLE ==========");
   console.log("Current time:", now.toISOString());
 
-  const expiredBookings = await prisma.booking.findMany({
+  const expiredConfirmed = await prisma.booking.findMany({
     where: {
       status: "CONFIRMED",
-      slot: {
-        endTime: {
-          lt: now,
-        },
-      },
+      slot: { endTime: { lt: now } },
     },
-    include: {
-      slot: true,
-    },
+    select: { id: true, slotId: true },
   });
 
-  console.log("Expired bookings found:", expiredBookings.length);
-
-  expiredBookings.forEach((booking) => {
-    console.log({
-      bookingId: booking.id,
-      slotId: booking.slotId,
-      status: booking.status,
-      endTime: booking.slot.endTime,
-    });
+  // PENDING bookings whose slot time has passed are cancelled — the slot
+  // time window is gone so they can never be fulfilled.
+  const expiredPending = await prisma.booking.findMany({
+    where: {
+      status: "PENDING",
+      slot: { endTime: { lt: now } },
+    },
+    select: { id: true, slotId: true },
   });
 
-  if (expiredBookings.length === 0) {
+  console.log("Expired confirmed:", expiredConfirmed.length);
+  console.log("Expired pending:", expiredPending.length);
+
+  if (expiredConfirmed.length === 0 && expiredPending.length === 0) {
     console.log("Nothing to update.");
     console.log("=====================================\n");
     return;
   }
 
   await prisma.$transaction([
-    ...expiredBookings.map((booking) =>
-      prisma.booking.update({
-        where: {
-          id: booking.id,
-        },
-        data: {
-          status: "COMPLETED",
-        },
-      }),
+    ...expiredConfirmed.map((b) =>
+      prisma.booking.update({ where: { id: b.id }, data: { status: "COMPLETED" } }),
     ),
-
-    ...expiredBookings.map((booking) =>
-      prisma.slot.update({
-        where: {
-          id: booking.slotId,
-        },
-        data: {
-          status: "AVAILABLE",
-        },
-      }),
+    ...expiredPending.map((b) =>
+      prisma.booking.update({ where: { id: b.id }, data: { status: "CANCELLED" } }),
     ),
   ]);
 

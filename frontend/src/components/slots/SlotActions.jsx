@@ -6,13 +6,16 @@ import ConfirmDialog from "../ui/ConfirmDialog";
 
 import { blockSlot, unblockSlot, deleteSlot } from "../../api/slotApi";
 
-function SlotActions({ slot, refreshSlots, onEdit }) {
+function SlotActions({ slot, refreshSlots, onEdit, onWalkIn }) {
   const [loading, setLoading] = useState(false);
 
   const [dialog, setDialog] = useState({
     open: false,
     type: null,
   });
+
+  const now = new Date();
+  const isPast = new Date(slot.endTime) <= now;
 
   const dialogConfig = useMemo(() => {
     switch (dialog.type) {
@@ -49,11 +52,7 @@ function SlotActions({ slot, refreshSlots, onEdit }) {
 
   const closeDialog = () => {
     if (loading) return;
-
-    setDialog({
-      open: false,
-      type: null,
-    });
+    setDialog({ open: false, type: null });
   };
 
   const handleConfirm = async () => {
@@ -63,17 +62,17 @@ function SlotActions({ slot, refreshSlots, onEdit }) {
       switch (dialog.type) {
         case "block":
           await blockSlot(slot.id);
-          toast.success("Slot blocked successfully.");
+          toast.success("Slot blocked.");
           break;
 
         case "unblock":
           await unblockSlot(slot.id);
-          toast.success("Slot unblocked successfully.");
+          toast.success("Slot unblocked.");
           break;
 
         case "delete":
           await deleteSlot(slot.id);
-          toast.success("Slot deleted successfully.");
+          toast.success("Slot deleted.");
           break;
 
         default:
@@ -81,11 +80,9 @@ function SlotActions({ slot, refreshSlots, onEdit }) {
       }
 
       closeDialog();
-
       await refreshSlots();
     } catch (error) {
       console.error(error);
-
       toast.error(error.response?.data?.message || "Operation failed.");
     } finally {
       setLoading(false);
@@ -96,57 +93,42 @@ function SlotActions({ slot, refreshSlots, onEdit }) {
 
   if (slot.status === "AVAILABLE") {
     menuItems = [
-      {
-        label: "Edit Slot",
-        onClick: () => onEdit?.(slot),
-      },
+      { label: "Add Walk-in", onClick: () => onWalkIn?.(slot) },
+      { label: "Edit Slot", onClick: () => onEdit?.(slot) },
       {
         label: "Block Slot",
-        onClick: () =>
-          setDialog({
-            open: true,
-            type: "block",
-          }),
+        onClick: () => setDialog({ open: true, type: "block" }),
       },
       {
         label: "Delete Slot",
         danger: true,
-        onClick: () =>
-          setDialog({
-            open: true,
-            type: "delete",
-          }),
+        onClick: () => setDialog({ open: true, type: "delete" }),
       },
     ];
   } else if (slot.status === "BLOCKED") {
     menuItems = [
-      {
-        label: "Edit Slot",
-        onClick: () => onEdit?.(slot),
-      },
+      { label: "Edit Slot", onClick: () => onEdit?.(slot) },
       {
         label: "Unblock Slot",
-        onClick: () =>
-          setDialog({
-            open: true,
-            type: "unblock",
-          }),
+        onClick: () => setDialog({ open: true, type: "unblock" }),
       },
       {
         label: "Delete Slot",
         danger: true,
-        onClick: () =>
-          setDialog({
-            open: true,
-            type: "delete",
-          }),
+        onClick: () => setDialog({ open: true, type: "delete" }),
+      },
+    ];
+  } else if (slot.status === "BOOKED") {
+    menuItems = [
+      {
+        label: "Delete Slot",
+        danger: true,
+        onClick: () => setDialog({ open: true, type: "delete" }),
       },
     ];
   }
 
-  if (menuItems.length === 0) {
-    return null;
-  }
+  if (menuItems.length === 0) return null;
 
   return (
     <>

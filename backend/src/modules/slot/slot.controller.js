@@ -19,6 +19,8 @@ const createSlot = async (req, res) => {
       slot,
     });
   } catch (error) {
+    console.error(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -29,8 +31,9 @@ const createSlot = async (req, res) => {
 const getSlotsByTurfId = async (req, res) => {
   try {
     const { turfId } = req.params;
+    const playerId = req.user?.id ?? null;
 
-    const { turf, slots } = await slotService.getSlotsByTurfId(turfId);
+    const { turf, slots } = await slotService.getSlotsByTurfId(turfId, playerId);
 
     return res.status(200).json({
       success: true,
@@ -38,6 +41,8 @@ const getSlotsByTurfId = async (req, res) => {
       slots,
     });
   } catch (error) {
+    console.error(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -59,6 +64,8 @@ const getOwnerCalendar = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -80,6 +87,8 @@ const editSlot = async (req, res) => {
       slot,
     });
   } catch (error) {
+    console.error(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -97,6 +106,8 @@ const blockSlot = async (req, res) => {
       slot,
     });
   } catch (error) {
+    console.error(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -114,6 +125,8 @@ const unblockSlot = async (req, res) => {
       slot,
     });
   } catch (error) {
+    console.error(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -130,10 +143,22 @@ const deleteSlot = async (req, res) => {
       message: "Slot deleted successfully",
     });
   } catch (error) {
+    console.error(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,
     });
+  }
+};
+
+const bulkGenerateSlots = async (req, res) => {
+  try {
+    const result = await slotService.bulkGenerateSlots(req.body, req.user.id);
+    return res.status(201).json({ success: true, data: result });
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
@@ -145,4 +170,5 @@ module.exports = {
   blockSlot,
   unblockSlot,
   deleteSlot,
+  bulkGenerateSlots,
 };

@@ -38,3 +38,8 @@ export const updateTurf = async (id, turfData) => {
   const response = await api.put(`/turfs/${id}`, turfData);
   return response.data;
 };
+
+export const setTurfListingStatus = async (id, isActive) => {
+  const response = await api.patch(`/turfs/${id}/listing`, { isActive });
+  return response.data;
+};

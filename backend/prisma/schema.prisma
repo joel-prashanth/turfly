@@ -13,8 +13,15 @@ enum Role {
   ADMIN
 }
 
+enum OwnerStatus {
+  PENDING_REVIEW
+  ACTIVE
+  SUSPENDED
+}
+
 enum SlotStatus {
   AVAILABLE
+  RESERVED
   BOOKED
   BLOCKED
 }
@@ -24,6 +31,22 @@ enum BookingStatus {
   CONFIRMED
   COMPLETED
   CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  RAZORPAY
+}
+
+enum BookingSource {
+  PLATFORM
+  OWNER_MANUAL
 }
 
 enum Sport {
@@ -36,15 +59,39 @@ enum Sport {
 }
 
 model User {
-  id           String  @id @default(uuid())
+  id           String @id @default(uuid())
   name         String
-  email        String  @unique
+  email        String @unique
   phone        String
   passwordHash String
   role         Role
 
-  turfs    Turf[]
-  bookings Booking[]
+  avatarUrl      String?
+  avatarPublicId String?
+  cooldownUntil  DateTime?
+  cooldownReason String?  // LATE_CANCELLATION | NO_SHOW
+
+  notifyNewBooking    Boolean @default(true)
+  notifyCancellation  Boolean @default(true)
+  notifyDailySummary  Boolean @default(false)
+
+  gstNumber        String?
+  businessName     String?
+  upiId            String?
+  paymentQrUrl      String?
+  paymentQrPublicId String?
+
+  ownerStatus       OwnerStatus @default(ACTIVE)
+  ownerStatusReason String?
+
+  verificationDocUrl       String?
+  verificationDocPublicId  String?
+  verificationDocType      String?
+
+  turfs         Turf[]
+  bookings      Booking[]
+  turfReports   TurfReport[]   @relation("TurfReports")
+  notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -62,7 +109,13 @@ model Turf {
   imageUrl      String
   imagePublicId String?
 
-  isActive Boolean @default(true)
+  isActive  Boolean @default(true)
+  capacity  Int     @default(1)
+
+  lat Float?
+  lng Float?
+
+  cancellationWindowHours Int @default(24)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -70,7 +123,20 @@ model Turf {
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id])
 
-  slots Slot[]
+  slots   Slot[]
+  reports TurfReport[]
+}
+
+model TurfReport {
+  id          String   @id @default(uuid())
+  turfId      String
+  turf        Turf     @relation(fields: [turfId], references: [id])
+  reporterId  String
+  reporter    User     @relation("TurfReports", fields: [reporterId], references: [id])
+  reason      String
+  description String?
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
 }
 
 model Slot {
@@ -84,21 +150,95 @@ model Slot {
 
   status SlotStatus @default(AVAILABLE)
 
-  booking Booking?
+  isWalkIn     Boolean @default(false)
+  walkInSlotId String? // set on slots blocked by a walk-in; references the walk-in slot's id
+
+  bookings     Booking[]
+  bookingSlots BookingSlot[]
 
   createdAt DateTime @default(now())
+}
+
+model BookingSlot {
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  slotId    String
+  slot      Slot    @relation(fields: [slotId], references: [id])
+  amount    Float
+
+  @@id([bookingId, slotId])
 }
 
 model Booking {
   id String @id @default(uuid())
 
-  playerId String
-  player   User   @relation(fields: [playerId], references: [id])
+  playerId String?
+  player   User?  @relation(fields: [playerId], references: [id])
 
-  slotId String @unique
+  walkInName  String?
+  walkInPhone String?
+
+  slotId String
   slot   Slot   @relation(fields: [slotId], references: [id])
 
-  status BookingStatus @default(PENDING)
+  status      BookingStatus @default(PENDING)
+  source      BookingSource @default(PLATFORM)
+  cancelledAt DateTime?
+
+  amount Float @default(0)
+
+  // Deposit (no-show protection)
+  depositAmount     Float?
+  depositOrderId    String?
+  depositPaymentId  String?
+  depositStatus     String? // PENDING | PAID | REFUNDED | FORFEITED
+
+  // Attendance (set by owner after slot)
+  attendanceStatus  String? // ATTENDED | NO_SHOW
+  attendanceMarkedAt DateTime?
+
+  extraSlots BookingSlot[]
+  payment    Payment?
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+
+  bookingId String?
+
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id String @id @default(uuid())
+
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id])
+
+  provider PaymentProvider @default(RAZORPAY)
+  status   PaymentStatus   @default(PENDING)
+
+  // Razorpay amount is stored in paise.
+  // Example: ₹1200 = 120000.
+  amount   Int
+  currency String @default("INR")
+
+  razorpayOrderId   String? @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+
+  failureReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

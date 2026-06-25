@@ -23,6 +23,21 @@ export const logout = async () => {
 
 export const getCurrentUser = async () => {
   const response = await api.get("/auth/me");
-
   return response.data;
 };
+
+export const updateProfile = async (data) => {
+  const response = await api.patch("/auth/profile", data);
+  return response.data;
+};
+
+export const changePassword = async (currentPassword, newPassword) => {
+  const response = await api.patch("/auth/password", { currentPassword, newPassword });
+  return response.data;
+};
+
+export const updateSettings = async (data) => {
+  const response = await api.patch("/auth/settings", data);
+  return response.data;
+};
+

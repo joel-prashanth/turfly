@@ -144,6 +144,29 @@ const deleteTurfController = async (req, res) => {
   }
 };
 
+const setListingStatusController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ownerId = req.user.userId;
+    const { isActive } = req.body;
+
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({ success: false, message: "isActive must be a boolean." });
+    }
+
+    const turf = await turfService.setListingStatus(id, ownerId, isActive);
+
+    return res.status(200).json({
+      success: true,
+      message: isActive ? "Turf is now listed." : "Turf unlisted.",
+      turf,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createTurf,
   getMyTurfs,
@@ -151,4 +174,5 @@ module.exports = {
   getTurfById,
   updateTurfController,
   deleteTurfController,
+  setListingStatusController,
 };
