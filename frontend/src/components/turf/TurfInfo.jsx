@@ -1,4 +1,4 @@
-import { MapPin, IndianRupee, Star, Navigation2 } from "lucide-react";
+import { MapPin, IndianRupee, Star, Navigation2, Clock } from "lucide-react";
 
 import Card from "../ui/Card";
 import turfImages from "../../utils/turfImages";
@@ -11,6 +11,68 @@ const sportColors = {
   BASKETBALL: "bg-orange-100 text-orange-700",
   VOLLEYBALL: "bg-pink-100 text-pink-700",
 };
+
+const DAYS = [
+  { key: "mon", label: "Mon" },
+  { key: "tue", label: "Tue" },
+  { key: "wed", label: "Wed" },
+  { key: "thu", label: "Thu" },
+  { key: "fri", label: "Fri" },
+  { key: "sat", label: "Sat" },
+  { key: "sun", label: "Sun" },
+];
+
+function fmt12(time24) {
+  if (!time24) return "";
+  const [h, m] = time24.split(":").map(Number);
+  const suffix = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return m === 0 ? `${h12} ${suffix}` : `${h12}:${m.toString().padStart(2, "0")} ${suffix}`;
+}
+
+function BusinessHoursDisplay({ hours }) {
+  if (!hours) return null;
+
+  // Group consecutive days with same hours
+  const groups = [];
+  let current = null;
+  for (const { key, label } of DAYS) {
+    const day = hours[key];
+    if (!day) continue;
+    const sig = day.closed ? "closed" : `${day.open}-${day.close}`;
+    if (current && current.sig === sig) {
+      current.end = label;
+    } else {
+      current = { start: label, end: label, sig, closed: day.closed, open: day.open, close: day.close };
+      groups.push(current);
+    }
+  }
+
+  return (
+    <div className="mt-10 border-t border-slate-200 pt-8">
+      <div className="flex items-center gap-2 mb-5">
+        <Clock size={20} className="text-slate-400" />
+        <h2 className="text-2xl font-semibold text-slate-900">Hours</h2>
+        <span className="text-xs text-slate-400 ml-1 italic">Typical hours · not guaranteed</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md">
+        {groups.map((g, i) => {
+          const range = g.start === g.end ? g.start : `${g.start}–${g.end}`;
+          return (
+            <div key={i} className="flex items-center justify-between gap-4 rounded-lg bg-slate-50 px-4 py-2.5">
+              <span className="text-sm font-medium text-slate-700">{range}</span>
+              {g.closed ? (
+                <span className="text-sm text-slate-400">Closed</span>
+              ) : (
+                <span className="text-sm text-slate-600">{fmt12(g.open)} – {fmt12(g.close)}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function TurfInfo({ turf }) {
   const fallbackImage = turfImages[turf.name.length % turfImages.length];
@@ -67,9 +129,18 @@ function TurfInfo({ turf }) {
               </div>
 
               <div className="flex items-center gap-2">
-                <Star size={18} className="fill-yellow-400 text-yellow-400" />
-                <span className="font-medium">4.8</span>
-                <span className="text-slate-400">(120 reviews)</span>
+                {turf.avgRating ? (
+                  <>
+                    <Star size={18} className="fill-yellow-400 text-yellow-400" />
+                    <span className="font-medium">{turf.avgRating}</span>
+                    <span className="text-slate-400">({turf.reviewCount} {turf.reviewCount === 1 ? "review" : "reviews"})</span>
+                  </>
+                ) : (
+                  <>
+                    <Star size={18} className="fill-slate-200 text-slate-200" />
+                    <span className="text-slate-400 text-sm italic">No reviews yet</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -102,6 +173,8 @@ function TurfInfo({ turf }) {
               "No description has been added for this turf yet."}
           </p>
         </div>
+
+        <BusinessHoursDisplay hours={turf.businessHours} />
       </div>
     </Card>
   );

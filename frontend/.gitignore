@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Large media (host on CDN instead)
+public/*.mp4
+public/*.mov
+public/*.webm
+
+# Boneyard leftovers
+src/bones/
+boneyard.config.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

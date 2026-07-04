@@ -9,6 +9,7 @@ import Spinner from "../../ui/Spinner";
 import TurfBasicInfo from "./TurfBasicInfo";
 import TurfPricing from "./TurfPricing";
 import TurfImageSection from "./TurfImageSection";
+import BusinessHoursEditor, { DEFAULT_BUSINESS_HOURS } from "./BusinessHoursEditor";
 
 import { createTurf, updateTurf, getTurfById } from "../../../api/turfApi";
 
@@ -30,6 +31,7 @@ function TurfForm({ mode = "create", turfId = null }) {
       publicId: "",
     },
     isActive: true,
+    businessHours: DEFAULT_BUSINESS_HOURS,
   });
 
   useEffect(() => {
@@ -56,6 +58,7 @@ function TurfForm({ mode = "create", turfId = null }) {
             publicId: turf.imagePublicId || "",
           },
           isActive: turf.isActive,
+          businessHours: turf.businessHours || DEFAULT_BUSINESS_HOURS,
         });
       } catch (error) {
         console.error(error);
@@ -112,6 +115,7 @@ function TurfForm({ mode = "create", turfId = null }) {
         imageUrl: formData.image.url,
         imagePublicId: formData.image.publicId,
         isActive: formData.isActive,
+        businessHours: formData.businessHours,
       };
 
       if (mode === "create") {
@@ -150,6 +154,15 @@ function TurfForm({ mode = "create", turfId = null }) {
         <TurfPricing formData={formData} handleChange={handleChange} />
 
         <TurfImageSection image={formData.image} onChange={handleImageChange} />
+
+        <div className="border-t border-slate-100 pt-8">
+          <BusinessHoursEditor
+            value={formData.businessHours}
+            onChange={(hours) =>
+              setFormData((prev) => ({ ...prev, businessHours: hours }))
+            }
+          />
+        </div>
 
         <Button
           type="submit"

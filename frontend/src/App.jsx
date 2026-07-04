@@ -23,6 +23,8 @@ import EditTurfPage from "./pages/EditTurfPage";
 import CreateSlotPage from "./pages/CreateSlotPage";
 import OwnerCalendarPage from "./pages/OwnerCalendarPage";
 import OwnerBookingsPage from "./pages/OwnerBookingsPage";
+import OwnerPaymentsPage from "./pages/OwnerPaymentsPage";
+import OwnerReviewsPage from "./pages/OwnerReviewsPage";
 import ManageSlotsPage from "./pages/ManageSlotsPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
@@ -173,6 +175,24 @@ function App() {
             element={
               <ProtectedRoute allowedRole="OWNER">
                 <OwnerBookingsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/owner/payments"
+            element={
+              <ProtectedRoute allowedRole="OWNER">
+                <OwnerPaymentsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/owner/reviews"
+            element={
+              <ProtectedRoute allowedRole="OWNER">
+                <OwnerReviewsPage />
               </ProtectedRoute>
             }
           />

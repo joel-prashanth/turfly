@@ -1,5 +1,6 @@
 const prisma = require("../../config/prisma");
 const uploadService = require("../upload/upload.service");
+const { geocode } = require("../../utils/geocode");
 const {
   releaseExpiredBookings,
 } = require("../bookings/bookingLifecycle.service");
@@ -14,6 +15,7 @@ const createTurf = async (turfData) => {
     imageUrl,
     ownerId,
     cancellationWindowHours,
+    businessHours,
   } = turfData;
 
   if (!name || !location || !pricePerHour || !sport) {
@@ -27,6 +29,8 @@ const createTurf = async (turfData) => {
   const windowHours = cancellationWindowHours !== undefined ? Number(cancellationWindowHours) : 24;
   if (windowHours < 0) throw new Error("Cancellation window cannot be negative.");
 
+  const coords = await geocode(location);
+
   const newTurf = await prisma.turf.create({
     data: {
       name,
@@ -37,6 +41,8 @@ const createTurf = async (turfData) => {
       imageUrl,
       ownerId,
       cancellationWindowHours: windowHours,
+      ...(coords && { lat: coords.lat, lng: coords.lng }),
+      ...(businessHours !== undefined && { businessHours }),
     },
   });
 
@@ -147,7 +153,7 @@ const getAllTurfs = async (filters = {}) => {
       break;
   }
 
-  return prisma.turf.findMany({
+  const turfs = await prisma.turf.findMany({
     where,
     orderBy,
     ...(limit && { take: Number(limit) }),
@@ -161,8 +167,18 @@ const getAllTurfs = async (filters = {}) => {
           paymentQrUrl: true,
         },
       },
+      reviews: { select: { rating: true } },
     },
   });
+
+  return turfs.map((t) => ({
+    ...t,
+    avgRating: t.reviews.length
+      ? Math.round((t.reviews.reduce((s, r) => s + r.rating, 0) / t.reviews.length) * 10) / 10
+      : null,
+    reviewCount: t.reviews.length,
+    reviews: undefined,
+  }));
 };
 
 const getTurfById = async (turfId) => {
@@ -182,8 +198,17 @@ const getTurfById = async (turfId) => {
           paymentQrUrl: true,
         },
       },
+      reviews: { select: { rating: true } },
     },
   });
+
+  if (turf) {
+    turf.avgRating = turf.reviews.length
+      ? Math.round((turf.reviews.reduce((s, r) => s + r.rating, 0) / turf.reviews.length) * 10) / 10
+      : null;
+    turf.reviewCount = turf.reviews.length;
+    delete turf.reviews;
+  }
 
   if (!turf) {
     throw new Error("Turf not found.");
@@ -291,6 +316,7 @@ const updateTurf = async (turfId, ownerId, turfData) => {
     imagePublicId,
     isActive,
     cancellationWindowHours,
+    businessHours,
   } = turfData;
 
   if (!name || !location || !sport) {
@@ -306,6 +332,12 @@ const updateTurf = async (turfId, ownerId, turfData) => {
 
   const oldPublicId = turf.imagePublicId;
 
+  let coordsUpdate = {};
+  if (location && (location !== turf.location || turf.lat == null)) {
+    const coords = await geocode(location);
+    if (coords) coordsUpdate = { lat: coords.lat, lng: coords.lng };
+  }
+
   const updatedTurf = await prisma.turf.update({
     where: {
       id: turfId,
@@ -320,6 +352,8 @@ const updateTurf = async (turfId, ownerId, turfData) => {
       imagePublicId,
       isActive,
       cancellationWindowHours: windowHours,
+      ...coordsUpdate,
+      ...(businessHours !== undefined && { businessHours }),
     },
   });
 

@@ -1,4 +1,4 @@
-import { ArrowUpDown, IndianRupee, Search, Trophy } from "lucide-react";
+import { ArrowUpDown, IndianRupee, MapPin, Search } from "lucide-react";
 
 import { SPORTS } from "../../constants/sports";
 
@@ -14,11 +14,14 @@ const inputCls =
 function TurfFilters({
   search,
   sport,
+  city,
+  cities = [],
   minPrice,
   maxPrice,
   sort,
   onSearchChange,
   onSportChange,
+  onCityChange,
   onMinPriceChange,
   onMaxPriceChange,
   onSortChange,
@@ -78,6 +81,27 @@ function TurfFilters({
           />
         </div>
       </div>
+
+      {/* City chips */}
+      {cities.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {[{ value: "", label: "All Cities" }, ...cities.map((c) => ({ value: c, label: c }))].map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => onCityChange(item.value)}
+              className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                city === item.value
+                  ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
+              }`}
+            >
+              {item.value && <MapPin size={12} />}
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Sport chips */}
       <div className="flex gap-2 overflow-x-auto pb-1">

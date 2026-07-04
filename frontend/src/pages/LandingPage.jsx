@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Search } from "lucide-react";
+import { ArrowRight, MapPin, Search, Shield, Star, Zap } from "lucide-react";
 
+const TurfMap = lazy(() => import("../components/ui/TurfMap"));
+
+import TurfCardSkeleton from "../components/skeletons/TurfCardSkeleton";
 import { getPlatformStats } from "../api/stats";
 import { getTurfs } from "../api/turfApi";
 import TurfCard from "../components/turf/TurfCard";
@@ -34,39 +37,69 @@ const HOW_IT_WORKS = [
   },
 ];
 
+const SPORTS = [
+  { value: "",           label: "All Sports", emoji: "🏟️" },
+  { value: "FOOTBALL",   label: "Football",   emoji: "⚽" },
+  { value: "CRICKET",    label: "Cricket",    emoji: "🏏" },
+  { value: "BADMINTON",  label: "Badminton",  emoji: "🏸" },
+  { value: "TENNIS",     label: "Tennis",     emoji: "🎾" },
+  { value: "BASKETBALL", label: "Basketball", emoji: "🏀" },
+  { value: "VOLLEYBALL", label: "Volleyball", emoji: "🏐" },
+];
+
 function LandingPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [stats, setStats] = useState({ turfs: 0, owners: 0, players: 0, bookings: 0 });
   const [turfs, setTurfs] = useState([]);
   const [turfsLoading, setTurfsLoading] = useState(true);
+  const [activeSport, setActiveSport] = useState("");
+  const [allTurfs, setAllTurfs] = useState([]);
 
-  useEffect(() => {
-    getPlatformStats().then(setStats).catch(() => {});
-    getTurfs({ limit: 3 })
+  const fetchTurfs = (sport) => {
+    setTurfsLoading(true);
+    getTurfs({ limit: 3, ...(sport ? { sport } : {}) })
       .then((r) => setTurfs(r.turfs))
       .catch(() => {})
       .finally(() => setTurfsLoading(false));
+  };
+
+  useEffect(() => {
+    getPlatformStats().then(setStats).catch(() => {});
+    fetchTurfs("");
+    // Fetch all turfs for the map (no limit)
+    getTurfs({}).then((r) => setAllTurfs(r.turfs || [])).catch(() => {});
   }, []);
+
+  const handleSportFilter = (sport) => {
+    setActiveSport(sport);
+    fetchTurfs(sport);
+  };
 
   return (
     <main className="antialiased">
 
       {/* ── HERO ─────────────────────────────────────────── */}
       <section className="relative flex min-h-[90vh] flex-col justify-end overflow-hidden bg-[#090E09]">
-        {/* Background photo */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${heroImage})` }}
+        {/* Background video */}
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          src="/Turfly background.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
         />
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/25" />
         {/* Gradient: transparent top → solid bottom */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#090E09] via-[#090E09]/70 to-[#090E09]/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#090E09] via-[#090E09]/60 to-transparent" />
 
         {/* Content — anchored to bottom */}
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-14 pt-32 sm:px-8">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-10 pt-24 sm:px-8">
 
           <p className="mb-5 text-sm font-semibold uppercase tracking-[0.2em] text-green-400">
-            Hyderabad's Sports Booking Platform
+            India's Sports Booking Platform
           </p>
 
           <h1 className="font-display text-[clamp(64px,12vw,120px)] font-extrabold uppercase leading-[0.88] tracking-tight text-white">
@@ -75,7 +108,7 @@ function LandingPage() {
           </h1>
 
           <p className="mt-6 max-w-md text-lg leading-7 text-white/60">
-            Find and reserve football, cricket, and badminton courts across Hyderabad —
+            Find and reserve football, cricket, and badminton courts across your city —
             real slots, instant confirmation.
           </p>
 
@@ -106,7 +139,7 @@ function LandingPage() {
           </form>
 
           {/* Live stats row */}
-          <div className="mt-12 grid grid-cols-2 gap-x-8 gap-y-6 border-t border-white/10 pt-8 sm:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-6 border-t border-white/10 pt-6 sm:grid-cols-4">
             {[
               { key: "turfs", label: "Turfs" },
               { key: "bookings", label: "Bookings" },
@@ -146,24 +179,43 @@ function LandingPage() {
           <div className="flex items-end justify-between gap-6">
             <div>
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-green-600">
-                Live in Hyderabad
+                Live in Your City
               </p>
               <h2 className="font-display text-[clamp(32px,5vw,52px)] font-extrabold uppercase leading-[0.92] text-gray-900">
                 Play at the<br className="hidden sm:block" /> City's Best Turfs
               </h2>
             </div>
             <Link
-              to="/turfs"
+              to={`/turfs${activeSport ? `?sport=${activeSport}` : ""}`}
               className="hidden shrink-0 items-center gap-1.5 text-sm font-semibold text-green-600 transition hover:text-green-500 sm:flex"
             >
               See all turfs <ArrowRight size={15} />
             </Link>
           </div>
 
+          {/* Sport filter pills */}
+          <div className="mt-8 flex flex-wrap gap-2">
+            {SPORTS.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => handleSportFilter(s.value)}
+                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                  activeSport === s.value
+                    ? "border-green-600 bg-green-600 text-white shadow-sm"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-green-300 hover:text-green-700"
+                }`}
+              >
+                <span>{s.emoji}</span>
+                {s.label}
+              </button>
+            ))}
+          </div>
+
           <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {turfsLoading
               ? Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-80 animate-pulse rounded-2xl bg-gray-200" />
+                  <TurfCardSkeleton key={i} />
                 ))
               : turfs.length === 0
               ? (
@@ -186,7 +238,7 @@ function LandingPage() {
           </div>
 
           <div className="mt-8 sm:hidden">
-            <Link to="/turfs">
+            <Link to={`/turfs${activeSport ? `?sport=${activeSport}` : ""}`}>
               <Button className="w-full">See all turfs</Button>
             </Link>
           </div>
@@ -220,23 +272,28 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── STATS ───────────────────────────────────────── */}
+      {/* ── WHERE WE PLAY (MAP) ─────────────────────────── */}
       <section className="bg-[#F7F7F5] py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { key: "turfs",    label: "Turfs on platform" },
-              { key: "bookings", label: "Bookings completed" },
-              { key: "players",  label: "Registered players" },
-              { key: "owners",   label: "Venue partners" },
-            ].map(({ key, label }) => (
-              <div key={key} className="border-t-2 border-green-500 pt-6">
-                <p className="font-display text-[clamp(48px,7vw,72px)] font-extrabold leading-none text-gray-900">
-                  <AnimatedCounter end={stats[key]} suffix="+" />
-                </p>
-                <p className="mt-3 text-sm text-gray-500">{label}</p>
+          <div className="mb-10">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-green-600">
+              Where we play
+            </p>
+            <h2 className="font-display text-[clamp(28px,4vw,44px)] font-extrabold uppercase leading-[0.92] text-gray-900">
+              Turfs across<br className="hidden sm:block" /> Hyderabad
+            </h2>
+            <p className="mt-4 max-w-md text-base text-gray-500">
+              Every pin is a verified, bookable venue. Click any marker to see details and book instantly.
+            </p>
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+            <Suspense fallback={
+              <div className="flex h-[420px] items-center justify-center rounded-2xl bg-slate-100">
+                <p className="text-sm text-slate-400">Loading map…</p>
               </div>
-            ))}
+            }>
+              <TurfMap turfs={allTurfs} />
+            </Suspense>
           </div>
         </div>
       </section>
@@ -282,6 +339,80 @@ function LandingPage() {
               >
                 List your venue <ArrowRight size={15} />
               </Link>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+
+      {/* ── ABOUT US ────────────────────────────────────── */}
+      <section className="bg-white py-20">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
+
+            {/* Left — text */}
+            <div>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-green-600">
+                About Turfly
+              </p>
+              <h2 className="font-display text-[clamp(28px,4vw,44px)] font-extrabold uppercase leading-[0.92] text-gray-900">
+                Built for<br /> Hyderabad's<br /> sports community.
+              </h2>
+              <p className="mt-6 text-base leading-7 text-gray-500">
+                Turfly was built out of frustration. Finding a turf in Hyderabad meant WhatsApp messages,
+                phone calls, and slots that were already taken by the time you showed up. We decided
+                to fix that.
+              </p>
+              <p className="mt-4 text-base leading-7 text-gray-500">
+                We're a Hyderabad-based team building the simplest, most honest sports booking platform
+                in the city. No hidden fees, no fake availability, no double bookings. Just real slots,
+                confirmed instantly.
+              </p>
+
+              <div className="mt-10 grid gap-6 sm:grid-cols-3">
+                {[
+                  {
+                    icon: Shield,
+                    title: "Zero double bookings",
+                    body: "Every slot you see is actually available — guaranteed by our real-time inventory system.",
+                  },
+                  {
+                    icon: Zap,
+                    title: "Instant confirmation",
+                    body: "Your booking is locked in the moment you confirm. No waiting, no follow-up calls.",
+                  },
+                  {
+                    icon: Star,
+                    title: "Fair for owners",
+                    body: "0% commission for 90 days. Walk-in bookings you manage yourself are always free.",
+                  },
+                ].map(({ icon: Icon, title, body }) => (
+                  <div key={title}>
+                    <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-green-600">
+                      <Icon size={18} />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-900">{title}</h3>
+                    <p className="mt-1.5 text-sm leading-6 text-gray-500">{body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right — stat cards */}
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: "Sports supported",      value: "6",          sub: "Football, Cricket, Badminton & more" },
+                { label: "Commission on walk-ins", value: "0%",         sub: "Your regulars always stay free"       },
+                { label: "Confirmation time",      value: "< 1 min",    sub: "From search to booking confirmed"     },
+                { label: "Free period",            value: "90 days",    sub: "Zero commission when you first join"  },
+              ].map(({ label, value, sub }) => (
+                <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50 p-6">
+                  <p className="font-display text-4xl font-extrabold text-gray-900">{value}</p>
+                  <p className="mt-2 text-sm font-semibold text-gray-700">{label}</p>
+                  <p className="mt-1 text-xs text-gray-400">{sub}</p>
+                </div>
+              ))}
             </div>
 
           </div>

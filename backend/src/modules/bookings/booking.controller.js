@@ -112,12 +112,38 @@ const getExtendOptions = async (req, res) => {
   }
 };
 
+const rescheduleBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newSlotId } = req.body;
+    const { userId } = req.user;
+    const result = await bookingService.rescheduleBooking(id, newSlotId, userId);
+    return res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 const createManualBooking = async (req, res) => {
   try {
     const { turfId, walkInName, walkInPhone, startTime, endTime } = req.body;
     const { userId } = req.user;
     const result = await bookingService.createManualBooking(userId, { turfId, walkInName, walkInPhone, startTime, endTime });
     return res.status(201).json({ success: true, message: result.message });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+const markAttendance = async (req, res) => {
+  try {
+    const result = await bookingService.markAttendance(
+      req.params.id,
+      req.user.userId,
+      req.body.status,
+    );
+    return res.json({ success: true, message: result.message });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
   }
@@ -131,4 +157,6 @@ module.exports = {
   cancelBooking,
   ownerCancelBooking,
   getExtendOptions,
+  rescheduleBooking,
+  markAttendance,
 };

@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+
+import { useAuth } from "../hooks/useAuth";
 import {
+  AlertTriangle,
   CalendarCheck2,
   CalendarClock,
   CheckCircle2,
@@ -10,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { getMyBookings, cancelBooking } from "../api/bookingApi";
+import { toastError } from "../api/axios";
 
 import Container from "../components/ui/Container";
 import PageHeader from "../components/ui/PageHeader";
@@ -22,6 +26,7 @@ import BookingCard from "../components/booking/BookingCard";
 import BookingCardSkeleton from "../components/skeletons/BookingCardSkeleton";
 
 export default function MyBookingsPage() {
+  const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,28 +42,30 @@ export default function MyBookingsPage() {
       const data = await getMyBookings();
       setBookings(data.bookings || []);
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to load bookings.");
+      toastError(error, "Failed to load bookings.");
     }
   };
 
   useEffect(() => {
+    if (user?.role !== "PLAYER") {
+      setLoading(false);
+      return;
+    }
+
     let intervalId;
 
     const loadBookings = async () => {
       await fetchBookings();
       setLoading(false);
-
       intervalId = setInterval(fetchBookings, 60000);
     };
 
     loadBookings();
 
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      if (intervalId) clearInterval(intervalId);
     };
-  }, []);
+  }, [user?.role]);
 
   const confirmCancelBooking = async () => {
     if (!cancelDialog.booking) {
@@ -79,9 +86,7 @@ export default function MyBookingsPage() {
 
       await fetchBookings();
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to cancel booking.",
-      );
+      toastError(error, "Failed to cancel booking.");
     } finally {
       setCancelLoading(false);
     }
@@ -138,6 +143,7 @@ export default function MyBookingsPage() {
         }
         onDepositPaid={fetchBookings}
         onExtended={fetchBookings}
+        onRescheduled={fetchBookings}
       />
     ));
 
@@ -181,10 +187,10 @@ export default function MyBookingsPage() {
 
           <div className="mb-8 grid gap-4 md:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
-              <Card key={index} className="h-28 animate-pulse bg-white p-5">
+              <div key={index} className="h-28 animate-pulse rounded-2xl bg-white border border-slate-200 p-5">
                 <div className="h-4 w-24 rounded bg-slate-200" />
                 <div className="mt-4 h-8 w-12 rounded bg-slate-200" />
-              </Card>
+              </div>
             ))}
           </div>
 
@@ -224,6 +230,26 @@ export default function MyBookingsPage() {
     <>
       <div className="min-h-screen bg-slate-50">
         <Container className="py-10">
+          {user?.cooldownUntil && new Date(user.cooldownUntil) > new Date() && (
+            <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+              <div>
+                <p className="text-sm font-bold text-red-800">Booking cooldown active</p>
+                <p className="mt-0.5 text-sm text-red-700">
+                  Due to{" "}
+                  {user.cooldownReason === "NO_SHOW" ? "repeated no-shows" : "late cancellations"},
+                  your account is on a cooldown until{" "}
+                  <span className="font-semibold">
+                    {new Date(user.cooldownUntil).toLocaleDateString("en-IN", {
+                      day: "numeric", month: "long", year: "numeric",
+                    })}
+                  </span>
+                  . New bookings are paused until then.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <PageHeader
               title="My Bookings"

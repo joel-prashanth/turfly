@@ -27,3 +27,27 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee { animation: none; }
 }
+
+/* Shimmer skeleton animation */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
+  background-size: 1200px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Darker variant for image placeholder blocks */
+.skeleton-shimmer-dark {
+  background: linear-gradient(90deg, #cbd5e1 25%, #94a3b8 50%, #cbd5e1 75%);
+  background-size: 1200px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer      { animation: none; background: #e2e8f0; }
+  .skeleton-shimmer-dark { animation: none; background: #cbd5e1; }
+}

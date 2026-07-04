@@ -2,6 +2,8 @@ const { Prisma } = require("@prisma/client");
 const prisma = require("../../config/prisma");
 const { releaseExpiredBookings } = require("./bookingLifecycle.service");
 const notif = require("../notifications/notification.service");
+const waitlistService = require("../waitlist/waitlist.service");
+const email = require("../email/email.service");
 
 const PAYMENT_HOLD_MINUTES = 10;
 
@@ -229,6 +231,28 @@ const createBooking = async (slotIds, playerId) => {
     bookingId: booking.id,
   }).catch(() => {});
 
+  // Emails (non-blocking)
+  email.bookingConfirmed({
+    playerEmail: booking.player.email,
+    playerName: booking.player.name,
+    turfName: booking.slot.turf.name,
+    location: booking.slot.turf.location,
+    startTime: booking.slot.startTime,
+    endTime,
+    amount: booking.amount,
+  }).catch(() => {});
+
+  email.newBookingOwnerAlert({
+    ownerEmail: booking.slot.turf.owner.email,
+    ownerName: booking.slot.turf.owner.name,
+    playerName: booking.player.name,
+    playerPhone: booking.player.phone,
+    turfName: booking.slot.turf.name,
+    startTime: booking.slot.startTime,
+    endTime,
+    amount: booking.amount,
+  }).catch(() => {});
+
   return booking;
 };
 
@@ -250,6 +274,7 @@ const getMyBookings = async (playerId) => {
 
     include: {
       payment: true,
+      review: { select: { id: true, rating: true } },
       extraSlots: {
         include: { slot: { select: { id: true, startTime: true, endTime: true } } },
         orderBy: { slot: { startTime: "asc" } },
@@ -396,7 +421,25 @@ const cancelBooking = async (bookingId, playerId) => {
       startTime: booking.slot.startTime,
       bookingId,
     }).catch(() => {});
+
+    notif.notifyBookingCancelled({
+      playerId: booking.playerId,
+      turfName: booking.slot.turf.name,
+      startTime: booking.slot.startTime,
+      bookingId,
+    }).catch(() => {});
+
+    email.bookingCancelledByPlayer({
+      ownerEmail: booking.slot.turf.owner.email,
+      ownerName: booking.slot.turf.owner.name,
+      playerName: booking.player.name,
+      turfName: booking.slot.turf.name,
+      startTime: booking.slot.startTime,
+    }).catch(() => {});
   }
+
+  // Notify waitlisted players that the slot is now free
+  waitlistService.notifyWaitlist(booking.slotId).catch(() => {});
 
   return { message: "Booking cancelled successfully" };
 };
@@ -487,6 +530,9 @@ const getOwnerBookings = async (ownerId, query) => {
                 location: true,
                 sport: true,
                 pricePerHour: true,
+                owner: {
+                  select: { createdAt: true },
+                },
               },
             },
           },
@@ -570,6 +616,13 @@ const ownerCancelBooking = async (bookingId, ownerId) => {
       turfName: booking.slot.turf.name,
       startTime: booking.slot.startTime,
       bookingId,
+    }).catch(() => {});
+
+    email.bookingCancelledByOwner({
+      playerEmail: booking.player?.email,
+      playerName: booking.player?.name,
+      turfName: booking.slot.turf.name,
+      startTime: booking.slot.startTime,
     }).catch(() => {});
   }
 
@@ -717,6 +770,138 @@ const createManualBooking = async (ownerId, { turfId, walkInName, walkInPhone, s
   return { message: "Walk-in booking created successfully" };
 };
 
+const rescheduleBooking = async (bookingId, newSlotId, playerId) => {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      slot: {
+        include: {
+          turf: {
+            select: {
+              id: true,
+              name: true,
+              cancellationWindowHours: true,
+              owner: { select: { id: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!booking) throw new Error("Booking not found");
+  if (booking.playerId !== playerId) throw new Error("Not authorized to reschedule this booking");
+  if (booking.status !== "CONFIRMED") throw new Error("Only confirmed bookings can be rescheduled");
+
+  const windowHours = booking.slot.turf.cancellationWindowHours;
+  const now = new Date();
+  const withinWindow =
+    now.getTime() + windowHours * 3600000 > new Date(booking.slot.startTime).getTime();
+  if (withinWindow) {
+    throw new Error(
+      windowHours === 0
+        ? "This venue does not allow rescheduling"
+        : `Cannot reschedule within ${windowHours}h of the slot start time`,
+    );
+  }
+
+  const newSlot = await prisma.slot.findUnique({ where: { id: newSlotId } });
+  if (!newSlot) throw new Error("New slot not found");
+  if (newSlot.turfId !== booking.slot.turf.id) throw new Error("New slot must be at the same turf");
+  if (newSlot.startTime <= now) throw new Error("New slot has already started");
+  if (newSlot.status === "BLOCKED") throw new Error("That slot has been blocked by the venue");
+  if (newSlot.status === "BOOKED") throw new Error("That slot is already booked");
+
+  const taken = await prisma.booking.count({
+    where: { slotId: newSlotId, status: { in: ["PENDING", "CONFIRMED"] } },
+  });
+  if (taken >= 1) throw new Error("That slot is already taken");
+
+  const newAmount = calculateSlotAmount(newSlot.startTime, newSlot.endTime, booking.slot.turf.pricePerHour ?? 0);
+
+  await prisma.$transaction(async (tx) => {
+    // Release old slot
+    await tx.slot.update({ where: { id: booking.slotId }, data: { status: "AVAILABLE" } });
+    // Reserve new slot
+    await tx.slot.update({ where: { id: newSlotId }, data: { status: "BOOKED" } });
+    // Update booking
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: { slotId: newSlotId, amount: newAmount },
+    });
+  });
+
+  notif.notifyBookingRescheduled({
+    playerId,
+    turfName: booking.slot.turf.name,
+    startTime: newSlot.startTime,
+    bookingId,
+  }).catch(() => {});
+
+  email.bookingRescheduled({
+    playerEmail: booking.player?.email,
+    playerName: booking.player?.name,
+    turfName: booking.slot.turf.name,
+    startTime: newSlot.startTime,
+    endTime: newSlot.endTime,
+  }).catch(() => {});
+
+  return { message: "Booking rescheduled successfully" };
+};
+
+const markAttendance = async (bookingId, ownerId, status) => {
+  if (!["ATTENDED", "NO_SHOW"].includes(status)) {
+    throw new Error("Status must be ATTENDED or NO_SHOW.");
+  }
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      slot: { include: { turf: { select: { ownerId: true, name: true } } } },
+      player: { select: { id: true, name: true } },
+    },
+  });
+
+  if (!booking) throw new Error("Booking not found.");
+  if (booking.slot.turf.ownerId !== ownerId) throw new Error("Not your booking.");
+  if (!["CONFIRMED", "COMPLETED"].includes(booking.status)) {
+    throw new Error("Can only mark attendance on confirmed or completed bookings.");
+  }
+  if (new Date(booking.slot.startTime) > new Date()) {
+    throw new Error("Slot hasn't started yet.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: { attendanceStatus: status, attendanceMarkedAt: new Date() },
+    });
+
+    if (status === "NO_SHOW" && booking.playerId) {
+      // Count no-shows in last 30 days for this player
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const recentNoShows = await tx.booking.count({
+        where: {
+          playerId: booking.playerId,
+          attendanceStatus: "NO_SHOW",
+          attendanceMarkedAt: { gt: since },
+        },
+      });
+
+      // 2+ no-shows in 30 days → 7-day cooldown
+      if (recentNoShows >= 2) {
+        const cooldownUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        await tx.user.update({
+          where: { id: booking.playerId },
+          data: { cooldownUntil, cooldownReason: "NO_SHOW" },
+        });
+      }
+    }
+  });
+
+  return { message: `Marked as ${status}.` };
+};
+
 module.exports = {
   createBooking,
   createManualBooking,
@@ -725,6 +910,8 @@ module.exports = {
   ownerCancelBooking,
   getOwnerBookings,
   getExtendOptions,
+  rescheduleBooking,
+  markAttendance,
   releaseExpiredPendingBookings,
   calculateSlotAmount,
 };

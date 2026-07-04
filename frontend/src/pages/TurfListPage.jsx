@@ -20,6 +20,20 @@ import TurfFilters from "../components/filters/TurfFilters";
 import TurfCardSkeleton from "../components/skeletons/TurfCardSkeleton";
 import TurfCard from "../components/turf/TurfCard";
 
+// Extracts the likely city name — last non-pincode, non-state segment
+const extractCity = (location) => {
+  if (!location) return null;
+  const parts = location
+    .split(",")
+    .map((p) => p.trim())
+    .filter((p) =>
+      p &&
+      !/\d{6}/.test(p) &&
+      !/andhra|telangana|karnataka|maharashtra|tamil|pradesh|nadu|kerala|odisha|gujarat/i.test(p)
+    );
+  return parts[parts.length - 1] || null;
+};
+
 const formatSportLabel = (sport) => {
   if (!sport) return "";
 
@@ -33,6 +47,7 @@ export default function TurfListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [turfs, setTurfs] = useState([]);
+  const [allCities, setAllCities] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [searchInput, setSearchInput] = useState(
@@ -41,11 +56,12 @@ export default function TurfListPage() {
   const debouncedSearch = useDebounce(searchInput, 400);
 
   const sport = searchParams.get("sport") || "";
+  const city = searchParams.get("city") || "";
   const minPrice = searchParams.get("minPrice") || "";
   const maxPrice = searchParams.get("maxPrice") || "";
   const sort = searchParams.get("sort") || "";
 
-  const hasActiveFilters = Boolean(debouncedSearch || sport || minPrice || maxPrice || sort);
+  const hasActiveFilters = Boolean(debouncedSearch || sport || city || minPrice || maxPrice || sort);
 
   const pageTitle = useMemo(() => {
     if (sport) {
@@ -63,12 +79,23 @@ export default function TurfListPage() {
         const data = await getTurfs({
           search: debouncedSearch,
           sport,
+          location: city,
           minPrice,
           maxPrice,
           sort,
         });
 
         setTurfs(data.turfs || []);
+
+        // Derive unique cities from unfiltered results to always show all city chips
+        if (!city && !debouncedSearch && !sport && !minPrice && !maxPrice) {
+          const cities = [...new Set(
+            (data.turfs || [])
+              .map((t) => extractCity(t.location))
+              .filter(Boolean)
+          )];
+          setAllCities(cities);
+        }
       } catch (error) {
         console.error(error);
       } finally {
@@ -77,7 +104,7 @@ export default function TurfListPage() {
     };
 
     fetchTurfs();
-  }, [debouncedSearch, sport, minPrice, maxPrice, sort]);
+  }, [debouncedSearch, sport, city, minPrice, maxPrice, sort]);
 
   const updateFilters = (updates) => {
     const params = new URLSearchParams(searchParams);
@@ -152,11 +179,14 @@ export default function TurfListPage() {
                 <TurfFilters
                   search={searchInput}
                   sport={sport}
+                  city={city}
+                  cities={allCities}
                   minPrice={minPrice}
                   maxPrice={maxPrice}
                   sort={sort}
                   onSearchChange={setSearchInput}
                   onSportChange={(v) => updateFilters({ sport: v })}
+                  onCityChange={(v) => updateFilters({ city: v })}
                   onMinPriceChange={(v) => updateFilters({ minPrice: v })}
                   onMaxPriceChange={(v) => updateFilters({ maxPrice: v })}
                   onSortChange={(v) => updateFilters({ sort: v })}

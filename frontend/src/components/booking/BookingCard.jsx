@@ -1,11 +1,14 @@
 import { useState } from "react";
 import {
   CalendarDays,
+  CalendarClock,
   CheckCircle2,
+  Star,
   Clock,
   IndianRupee,
   MapPin,
   QrCode,
+  Receipt,
   ReceiptText,
   ShieldCheck,
   XCircle,
@@ -17,6 +20,9 @@ import Card from "../ui/Card";
 import PaymentQrModal from "../ui/PaymentQrModal";
 import DepositPaymentModal from "./DepositPaymentModal";
 import ExtendSessionSheet from "./ExtendSessionSheet";
+import RescheduleModal from "./RescheduleModal";
+import BookingReceiptModal from "./BookingReceiptModal";
+import ReviewModal from "./ReviewModal";
 
 const sportColors = {
   FOOTBALL: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -113,10 +119,13 @@ const formatPrice = (amount) =>
     maximumFractionDigits: 0,
   });
 
-function BookingCard({ booking, onCancel, onDepositPaid, onExtended }) {
+function BookingCard({ booking, onCancel, onDepositPaid, onExtended, onRescheduled }) {
   const [showQr, setShowQr] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
   const [showExtend, setShowExtend] = useState(false);
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [showReview, setShowReview] = useState(false);
   const turf = booking.slot.turf;
 
   // If multi-slot booking, endTime is the last extra slot's endTime
@@ -221,130 +230,147 @@ function BookingCard({ booking, onCancel, onDepositPaid, onExtended }) {
             </div>
           </div>
 
-          <div className="p-5 sm:p-6">
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-              <div className="min-w-0 flex-1">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      <CalendarDays className="h-4 w-4" />
-                      Date
-                    </div>
+          <div className="flex flex-1 flex-col justify-between p-5 sm:p-6">
 
-                    <p className="mt-2 text-sm font-bold leading-6 text-slate-900">
-                      {formatDate(booking.slot.startTime)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      <Clock className="h-4 w-4" />
-                      Time
-                    </div>
-                    <p className="mt-2 text-sm font-bold leading-6 text-slate-900">
-                      {formatTime(booking.slot.startTime)} – {formatTime(bookingEndTime)}
-                    </p>
-                    {totalSlots > 1 && (
-                      <p className="text-xs font-semibold text-emerald-600">{totalSlots} slots</p>
-                    )}
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      <Clock className="h-4 w-4" />
-                      Duration
-                    </div>
-                    <p className="mt-2 text-sm font-bold leading-6 text-slate-900">
-                      {formatDuration(booking.slot.startTime, bookingEndTime)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
-                    <IndianRupee className="h-4 w-4 text-emerald-600" />
-                    ₹{formatPrice(amount)} total
-                  </div>
-
-                  <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
-                    <ReceiptText className="h-4 w-4 text-slate-500" />
-                    {paymentStatus ?? "Pay at venue"}
-                  </div>
-                </div>
+            {/* Info section — clean label/value pairs, no boxes */}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
+              <div>
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                  <CalendarDays className="h-3.5 w-3.5" /> Date
+                </p>
+                <p className="mt-1.5 text-sm font-bold text-slate-900">
+                  {formatDate(booking.slot.startTime)}
+                </p>
               </div>
 
-              <div className="flex shrink-0 flex-col gap-3 xl:items-end">
-                <span
-                  className={`
-                    inline-flex w-fit items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold
-                    ${status.badge}
-                  `}
-                >
-                  <StatusIcon className="h-4 w-4" />
-                  {status.label}
+              <div>
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                  <Clock className="h-3.5 w-3.5" /> Time
+                </p>
+                <p className="mt-1.5 text-sm font-bold text-slate-900">
+                  {formatTime(booking.slot.startTime)} – {formatTime(bookingEndTime)}
+                </p>
+                {totalSlots > 1 && (
+                  <p className="text-[11px] font-semibold text-emerald-600">{totalSlots} slots</p>
+                )}
+              </div>
+
+              <div>
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                  <Clock className="h-3.5 w-3.5" /> Duration
+                </p>
+                <p className="mt-1.5 text-sm font-bold text-slate-900">
+                  {formatDuration(booking.slot.startTime, bookingEndTime)}
+                </p>
+              </div>
+
+              <div>
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                  <IndianRupee className="h-3.5 w-3.5" /> Amount
+                </p>
+                <p className="mt-1.5 text-sm font-bold text-slate-900">
+                  ₹{formatPrice(amount)}
+                </p>
+                <p className="text-[11px] font-medium text-slate-400">{paymentStatus ?? "Pay at venue"}</p>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="my-5 border-t border-dashed border-slate-200" />
+
+            {/* Bottom bar — badges left, actions right */}
+            <div className="flex flex-wrap items-center gap-2">
+
+              {/* Left: status + passive indicators */}
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${status.badge}`}>
+                <StatusIcon className="h-3 w-3" />
+                {status.label}
+              </span>
+
+              {depositPaid && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <ShieldCheck className="h-3 w-3" /> Deposit secured
                 </span>
+              )}
 
-                {slotActive && (
-                  <Button
-                    size="sm"
-                    onClick={() => setShowExtend(true)}
-                    className="animate-pulse-once bg-emerald-500 hover:bg-emerald-600"
+              {booking.status === "COMPLETED" && booking.review && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  {booking.review.rating}/5 stars
+                </span>
+              )}
+
+              {cancelBlocked && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-400">
+                  Cancellation closed
+                </span>
+              )}
+
+              {/* Spacer */}
+              <div className="flex-1" />
+
+              {/* Right: action buttons */}
+              {booking.status === "COMPLETED" && !booking.review && (
+                <button
+                  onClick={() => setShowReview(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+                >
+                  <Star className="h-3.5 w-3.5" /> Leave Review
+                </button>
+              )}
+
+              {depositPending && (
+                <button
+                  onClick={() => setShowDeposit(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5" /> Pay deposit
+                </button>
+              )}
+
+              {booking.status === "CONFIRMED" && qrUrl && (
+                <button
+                  onClick={() => setShowQr(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  <QrCode className="h-3.5 w-3.5" /> Pay via QR
+                </button>
+              )}
+
+              {booking.status === "CONFIRMED" && (
+                <button
+                  onClick={() => setShowReceipt(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  <Receipt className="h-3.5 w-3.5" /> Receipt
+                </button>
+              )}
+
+              {slotActive && (
+                <button
+                  onClick={() => setShowExtend(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600"
+                >
+                  <Zap className="h-3.5 w-3.5" /> Extend
+                </button>
+              )}
+
+              {canCancel && (
+                <>
+                  <button
+                    onClick={() => setShowReschedule(true)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
                   >
-                    <Zap className="h-4 w-4" />
-                    Extend Session
-                  </Button>
-                )}
-
-                {depositPaid && (
-                  <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    Deposit secured
-                  </span>
-                )}
-
-                {depositPending && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setShowDeposit(true)}
-                  >
-                    <ShieldCheck className="h-4 w-4" />
-                    Pay deposit
-                  </Button>
-                )}
-
-                {booking.status === "CONFIRMED" && qrUrl && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setShowQr(true)}
-                  >
-                    <QrCode className="h-4 w-4" />
-                    Pay via QR
-                  </Button>
-                )}
-
-                {canCancel && (
-                  <Button
-                    variant="danger"
-                    size="sm"
+                    <CalendarClock className="h-3.5 w-3.5" /> Reschedule
+                  </button>
+                  <button
                     onClick={() => onCancel(booking)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-100"
                   >
-                    Cancel Booking
-                  </Button>
-                )}
-
-                {cancelBlocked && (
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs text-slate-500">
-                    Cancellation window closed
-                    {cancellationWindowHours > 0 && (
-                      <span className="block font-medium text-slate-400">
-                        ({cancellationWindowHours}h policy)
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
+                    <XCircle className="h-3.5 w-3.5" /> Cancel
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -374,6 +400,28 @@ function BookingCard({ booking, onCancel, onDepositPaid, onExtended }) {
         onExtended={() => { onExtended?.(); }}
       />
     )}
+
+    {showReschedule && (
+      <RescheduleModal
+        open={showReschedule}
+        booking={booking}
+        onClose={() => setShowReschedule(false)}
+        onRescheduled={() => { setShowReschedule(false); onRescheduled?.(); }}
+      />
+    )}
+
+    <BookingReceiptModal
+      open={showReceipt}
+      booking={booking}
+      onClose={() => setShowReceipt(false)}
+    />
+
+    <ReviewModal
+      open={showReview}
+      booking={booking}
+      onClose={() => setShowReview(false)}
+      onReviewed={() => { setShowReview(false); onRescheduled?.(); }}
+    />
   </>
   );
 }

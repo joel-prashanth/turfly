@@ -5,8 +5,11 @@ import { getNotifications, markAllRead, markOneRead, clearAll } from "../../api/
 const TYPE_ICON = {
   NEW_BOOKING:                 "🎉",
   BOOKING_CONFIRMED:           "✅",
+  BOOKING_RESCHEDULED:         "🔄",
+  BOOKING_CANCELLED:           "🚫",
   BOOKING_CANCELLED_BY_PLAYER: "❌",
   BOOKING_CANCELLED_BY_OWNER:  "❌",
+  SLOT_AVAILABLE:              "🟢",
 };
 
 function timeAgo(date) {

@@ -1,13 +1,17 @@
+import { useState } from "react";
 import {
-  CalendarDays,
+  BellOff,
+  BellRing,
   CheckCircle2,
   Clock,
   IndianRupee,
   Lock,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 import Button from "../ui/Button";
 import Card from "../ui/Card";
+import { joinWaitlist, leaveWaitlist } from "../../api/waitlistApi";
 
 const formatDate = (date) =>
   new Date(date).toLocaleDateString("en-IN", {
@@ -99,17 +103,44 @@ const calculateAmount = (slot, pricePerHour) => {
   return Math.round(durationHours * Number(pricePerHour));
 };
 
-function SlotCard({ slot, canBook, onBook, pricePerHour, isBookedByMe, isSelected = false }) {
+function SlotCard({ slot, canBook, onBook, pricePerHour, isBookedByMe, isSelected = false, isOnWaitlist: initialOnWaitlist = false }) {
   const now = new Date();
   const start = new Date(slot.startTime);
   const end = new Date(slot.endTime);
   const isInProgress = now >= start && now < end;
   const hasEnded = now >= end;
+  const [onWaitlist, setOnWaitlist] = useState(initialOnWaitlist);
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
 
   const slotMeta = getSlotMeta(slot, isInProgress, hasEnded);
   const amount = calculateAmount(slot, pricePerHour);
   const isBookable =
     slot.status === "AVAILABLE" && !hasEnded && !isInProgress && canBook;
+
+  const canWaitlist =
+    canBook &&
+    !hasEnded &&
+    !isInProgress &&
+    (slot.status === "BOOKED" || slot.status === "RESERVED");
+
+  const handleWaitlistToggle = async () => {
+    setWaitlistLoading(true);
+    try {
+      if (onWaitlist) {
+        await leaveWaitlist(slot.id);
+        setOnWaitlist(false);
+        toast("Removed from waitlist.");
+      } else {
+        await joinWaitlist(slot.id);
+        setOnWaitlist(true);
+        toast.success("Added to waitlist! We'll notify you if this slot opens up.");
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Failed to update waitlist.");
+    } finally {
+      setWaitlistLoading(false);
+    }
+  };
 
   const renderAction = () => {
     if (isBookable) {
@@ -130,6 +161,23 @@ function SlotCard({ slot, canBook, onBook, pricePerHour, isBookedByMe, isSelecte
           <Lock className="h-4 w-4" />
           Players Only
         </div>
+      );
+    }
+
+    if (canWaitlist) {
+      return (
+        <button
+          onClick={handleWaitlistToggle}
+          disabled={waitlistLoading}
+          className={`flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${
+            onWaitlist
+              ? "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
+              : "border-slate-200 bg-white text-slate-600 hover:border-amber-300 hover:text-amber-700"
+          }`}
+        >
+          {onWaitlist ? <BellOff className="h-4 w-4" /> : <BellRing className="h-4 w-4" />}
+          {waitlistLoading ? "…" : onWaitlist ? "Leave Waitlist" : "Join Waitlist"}
+        </button>
       );
     }
 

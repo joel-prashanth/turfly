@@ -15,6 +15,7 @@ import {
 import toast from "react-hot-toast";
 
 import { useAuth } from "../../hooks/useAuth";
+import Logo from "./Logo";
 
 const navItems = [
   {
@@ -39,15 +40,13 @@ const navItems = [
   },
   {
     label: "Payments",
-    to: "#",
+    to: "/owner/payments",
     icon: CreditCard,
-    disabled: true,
   },
   {
     label: "Reviews",
-    to: "#",
+    to: "/owner/reviews",
     icon: Star,
-    disabled: true,
   },
   {
     label: "Settings",
@@ -111,31 +110,14 @@ function OwnerSidebar({ onNavigate }) {
           isExpanded ? "justify-between px-4" : "justify-center px-0"
         }`}
       >
-        <button
-          type="button"
-          onClick={() => {
-            navigate("/owner/dashboard");
-            onNavigate?.();
-          }}
-          className={`flex min-w-0 items-center transition-all duration-300 ${
-            isExpanded ? "gap-3" : "justify-center"
-          }`}
-        >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-green-600 text-lg font-black text-white shadow-sm">
-            T
-          </div>
-
+        <div className={`flex min-w-0 flex-col ${isExpanded ? "items-start" : "items-center"}`}>
+          <Logo to="/owner/dashboard" collapsed={!isExpanded} light />
           {isExpanded && (
-            <div className="min-w-0 text-left">
-              <p className="truncate text-lg font-black tracking-tight text-slate-950">
-                Turfly
-              </p>
-              <p className="truncate text-xs font-medium text-slate-500">
-                Owner OS
-              </p>
-            </div>
+            <p className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+              Owner OS
+            </p>
           )}
-        </button>
+        </div>
 
         <button
           type="button"

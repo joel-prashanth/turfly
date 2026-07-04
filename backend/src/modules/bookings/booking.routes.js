@@ -56,4 +56,18 @@ router.get(
   bookingController.getExtendOptions,
 );
 
+router.patch(
+  "/:id/reschedule",
+  authenticate,
+  authorize("PLAYER"),
+  bookingController.rescheduleBooking,
+);
+
+router.patch(
+  "/:id/attendance",
+  authenticate,
+  authorize("OWNER"),
+  bookingController.markAttendance,
+);
+
 module.exports = router;

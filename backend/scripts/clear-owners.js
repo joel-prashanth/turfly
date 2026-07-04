@@ -41,7 +41,15 @@ async function main() {
 
   const ownerIds = owners.map((o) => o.id);
 
-  // FK order: payments → bookings → reports → slots → turfs → users
+  // FK order: reviews → waitlist → payments → bookings → reports → slots → turfs → users
+  const reviews = await prisma.review.deleteMany({
+    where: { booking: { slot: { turf: { ownerId: { in: ownerIds } } } } },
+  });
+
+  const waitlist = await prisma.waitlist.deleteMany({
+    where: { slot: { turf: { ownerId: { in: ownerIds } } } },
+  });
+
   const payments = await prisma.payment.deleteMany({
     where: { booking: { slot: { turf: { ownerId: { in: ownerIds } } } } },
   });
@@ -67,6 +75,8 @@ async function main() {
   });
 
   console.log("");
+  console.log("  ✓ Reviews deleted    " + reviews.count);
+  console.log("  ✓ Waitlist deleted   " + waitlist.count);
   console.log("  ✓ Payments deleted   " + payments.count);
   console.log("  ✓ Bookings deleted   " + bookings.count);
   console.log("  ✓ Reports deleted    " + reports.count);

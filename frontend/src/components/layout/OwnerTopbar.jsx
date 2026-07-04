@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import { useAuth } from "../../hooks/useAuth";
+import Logo from "./Logo";
 
 function OwnerTopbar({ onMenuClick }) {
   const navigate = useNavigate();
@@ -74,11 +75,15 @@ function OwnerTopbar({ onMenuClick }) {
           <Menu className="h-6 w-6" />
         </button>
 
-        <div className="min-w-0">
+        {/* Logo — visible on mobile (sidebar hidden); hidden on lg+ where sidebar shows it */}
+        <span className="lg:hidden">
+          <Logo to="/owner/dashboard" light />
+        </span>
+
+        <div className="hidden min-w-0 lg:block">
           <p className="truncate text-sm font-medium text-slate-500">
             {greeting}, {user?.name || "Owner"} 👋
           </p>
-
           <h1 className="truncate text-lg font-bold text-slate-950 sm:text-xl">
             Manage your turf business
           </h1>

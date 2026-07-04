@@ -123,6 +123,16 @@ export default function LoginPage() {
             Create one
           </Link>
         </p>
+
+        <div className="mt-4 flex items-center justify-center gap-3 text-xs text-slate-300">
+          <span>Admin?</span>
+          <span className="text-slate-200">·</span>
+          <span className="text-slate-400">Sign in above</span>
+          <span className="text-slate-200">·</span>
+          <Link to="/admin/setup" className="hover:text-slate-400 transition underline underline-offset-2">
+            First time setup
+          </Link>
+        </div>
       </div>
     </div>
   );

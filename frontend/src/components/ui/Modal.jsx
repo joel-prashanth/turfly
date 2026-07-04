@@ -34,7 +34,9 @@ const Modal = ({
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open, closeOnEscape, onClose]);
+    // onClose intentionally excluded — it's always a new arrow fn reference
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, closeOnEscape]);
 
   if (!open) return null;
 

@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 
 import Card from "../ui/Card";
 import BookingStatusBadge from "./BookingStatusBadge";
-import { markAttendance } from "../../api/depositApi";
+import { markAttendance } from "../../api/bookingApi";
 
 function OwnerBookingCard({ booking, onViewDetails, onAttendanceMarked }) {
   const { player, slot, status } = booking;
@@ -23,16 +23,19 @@ function OwnerBookingCard({ booking, onViewDetails, onAttendanceMarked }) {
 
   const slotEnded = new Date(slot.endTime) < new Date();
   const needsAttendance =
-    status === "CONFIRMED" &&
+    (status === "CONFIRMED" || status === "COMPLETED") &&
     slotEnded &&
-    !booking.attendanceStatus &&
-    booking.depositStatus === "PAID";
+    !booking.attendanceStatus;
 
-  const handleAttendance = async (attended) => {
-    setMarking(attended ? "attended" : "no_show");
+  const handleAttendance = async (attendanceStatus) => {
+    setMarking(attendanceStatus);
     try {
-      await markAttendance(booking.id, attended);
-      toast.success(attended ? "Attendance marked — deposit will be refunded." : "No-show recorded — deposit forfeited.");
+      await markAttendance(booking.id, attendanceStatus);
+      toast.success(
+        attendanceStatus === "ATTENDED"
+          ? "Attendance confirmed."
+          : "No-show recorded. Player's reliability affected.",
+      );
       onAttendanceMarked?.();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to mark attendance.");
@@ -114,20 +117,20 @@ function OwnerBookingCard({ booking, onViewDetails, onAttendanceMarked }) {
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500">Did they show up?</span>
               <button
-                onClick={() => handleAttendance(true)}
+                onClick={() => handleAttendance("ATTENDED")}
                 disabled={!!marking}
                 className="flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
               >
                 <UserCheck size={13} />
-                {marking === "attended" ? "..." : "Yes"}
+                {marking === "ATTENDED" ? "…" : "Attended"}
               </button>
               <button
-                onClick={() => handleAttendance(false)}
+                onClick={() => handleAttendance("NO_SHOW")}
                 disabled={!!marking}
                 className="flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
               >
                 <UserX size={13} />
-                {marking === "no_show" ? "..." : "No-show"}
+                {marking === "NO_SHOW" ? "…" : "No-show"}
               </button>
             </div>
           )}

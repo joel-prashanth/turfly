@@ -1,4 +1,36 @@
-import { MapPin } from "lucide-react";
+import { MapPin, Star, Clock } from "lucide-react";
+
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
+function fmt12(t) {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  const s = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return m === 0 ? `${h12} ${s}` : `${h12}:${String(m).padStart(2, "0")} ${s}`;
+}
+
+function TodayHours({ hours }) {
+  if (!hours) return null;
+  const key = DAY_KEYS[new Date().getDay()];
+  const day = hours[key];
+  if (!day) return null;
+  if (day.closed) {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+        <Clock size={12} className="shrink-0" />
+        <span>Closed today</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1.5 text-xs">
+      <Clock size={12} className="shrink-0 text-emerald-500" />
+      <span className="text-emerald-700 font-medium">Open today</span>
+      <span className="text-slate-400">{fmt12(day.open)} – {fmt12(day.close)}</span>
+    </div>
+  );
+}
 
 const sportBadge = {
   FOOTBALL:   "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -86,6 +118,32 @@ function TurfCard({ turf, actions }) {
             </p>
             <p className="text-[11px] text-slate-400">per hour</p>
           </div>
+        </div>
+
+        {/* Rating */}
+        <div className="mt-3 flex items-center gap-1.5">
+          {turf.avgRating ? (
+            <>
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Star
+                    key={n}
+                    size={13}
+                    className={n <= Math.round(turf.avgRating) ? "fill-amber-400 text-amber-400" : "fill-slate-200 text-slate-200"}
+                  />
+                ))}
+              </div>
+              <span className="text-xs font-bold text-slate-700">{turf.avgRating}</span>
+              <span className="text-xs text-slate-400">({turf.reviewCount} {turf.reviewCount === 1 ? "review" : "reviews"})</span>
+            </>
+          ) : (
+            <span className="text-xs text-slate-400 italic">No reviews yet</span>
+          )}
+        </div>
+
+        {/* Today's hours — always rendered to keep card height consistent */}
+        <div className="mt-2 h-4">
+          <TodayHours hours={turf.businessHours} />
         </div>
 
         {/* Owner */}

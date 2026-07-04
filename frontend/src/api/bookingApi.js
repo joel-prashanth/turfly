@@ -45,7 +45,17 @@ export const getExtendOptions = async (bookingId) => {
   return response.data;
 };
 
+export const rescheduleBooking = async (bookingId, newSlotId) => {
+  const response = await api.patch(`/bookings/${bookingId}/reschedule`, { newSlotId });
+  return response.data;
+};
+
 export const createManualBooking = async ({ turfId, walkInName, walkInPhone, startTime, endTime }) => {
   const response = await api.post("/bookings/manual", { turfId, walkInName, walkInPhone, startTime, endTime });
+  return response.data;
+};
+
+export const markAttendance = async (bookingId, status) => {
+  const response = await api.patch(`/bookings/${bookingId}/attendance`, { status });
   return response.data;
 };

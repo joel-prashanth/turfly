@@ -10,6 +10,8 @@ const USER_SELECT = {
   role: true,
   avatarUrl: true,
   avatarPublicId: true,
+  cooldownUntil: true,
+  cooldownReason: true,
   notifyNewBooking: true,
   notifyCancellation: true,
   notifyDailySummary: true,

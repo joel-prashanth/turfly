@@ -17,6 +17,8 @@ import { useAuth } from "../hooks/useAuth";
 import { getTurfById } from "../api/turfApi";
 import { getSlotsByTurfId } from "../api/slotApi";
 import { createBooking } from "../api/bookingApi";
+import { getMyWaitlist } from "../api/waitlistApi";
+import TurfReviews from "../components/turf/TurfReviews";
 
 import Container from "../components/ui/Container";
 import PageHeader from "../components/ui/PageHeader";
@@ -52,6 +54,7 @@ export default function TurfDetailsPage() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [successData, setSuccessData] = useState(null);
   const [showReport, setShowReport] = useState(false);
+  const [waitlistedSlotIds, setWaitlistedSlotIds] = useState(new Set());
 
   const canBook = user?.role === "PLAYER";
 
@@ -60,13 +63,16 @@ export default function TurfDetailsPage() {
       try {
         setLoading(true);
 
-        const [turfData, slotData] = await Promise.all([
-          getTurfById(id),
-          getSlotsByTurfId(id),
-        ]);
+        const fetches = [getTurfById(id), getSlotsByTurfId(id)];
+        if (user?.role === "PLAYER") fetches.push(getMyWaitlist());
+        const [turfData, slotData, waitlistData] = await Promise.all(fetches);
 
         setTurf(turfData.turf);
         setSlots(slotData.slots || []);
+        if (waitlistData) {
+          const ids = new Set((waitlistData.data?.waitlist || []).map((w) => w.slotId));
+          setWaitlistedSlotIds(ids);
+        }
       } catch (error) {
         console.error(error);
         toast.error("Failed to load turf details.");
@@ -93,41 +99,39 @@ export default function TurfDetailsPage() {
   // - All selected slots must be consecutive (no gaps)
   // - Max 3 slots
   const handleSlotToggle = (slot) => {
-    setSelectedSlots((prev) => {
-      const isSelected = prev.some((s) => s.id === slot.id);
+    const prev = selectedSlots;
+    const isSelected = prev.some((s) => s.id === slot.id);
 
-      if (isSelected) {
-        // Deselect: only allow removing from either end to keep selection consecutive
-        const idx = prev.findIndex((s) => s.id === slot.id);
-        if (idx === 0 || idx === prev.length - 1) {
-          return prev.filter((s) => s.id !== slot.id);
-        }
-        // Clicking the middle — clear all and restart with this slot
-        return [slot];
+    if (isSelected) {
+      const idx = prev.findIndex((s) => s.id === slot.id);
+      if (idx === 0 || idx === prev.length - 1) {
+        setSelectedSlots(prev.filter((s) => s.id !== slot.id));
+      } else {
+        setSelectedSlots([slot]);
       }
+      return;
+    }
 
-      if (prev.length === 0) return [slot];
-      if (prev.length >= 3) {
-        toast("Maximum 3 slots at a time.", { icon: "⚠️" });
-        return prev;
-      }
+    if (prev.length === 0) { setSelectedSlots([slot]); return; }
 
-      // Must be consecutive with the current selection
-      const sorted = [...prev].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-      const first = sorted[0];
-      const last = sorted[sorted.length - 1];
+    if (prev.length >= 3) {
+      toast("Maximum 3 slots at a time.", { icon: "⚠️" });
+      return;
+    }
 
-      const appendsAfter = new Date(last.endTime).getTime() === new Date(slot.startTime).getTime();
-      const prependsBefore = new Date(slot.endTime).getTime() === new Date(first.startTime).getTime();
+    const sorted = [...prev].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
 
-      if (!appendsAfter && !prependsBefore) {
-        toast("Pick consecutive slots only.", { icon: "⚠️" });
-        return prev;
-      }
+    const appendsAfter = new Date(last.endTime).getTime() === new Date(slot.startTime).getTime();
+    const prependsBefore = new Date(slot.endTime).getTime() === new Date(first.startTime).getTime();
 
-      const next = [...prev, slot].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-      return next;
-    });
+    if (!appendsAfter && !prependsBefore) {
+      toast("Pick consecutive slots only.", { icon: "⚠️" });
+      return;
+    }
+
+    setSelectedSlots([...prev, slot].sort((a, b) => new Date(a.startTime) - new Date(b.startTime)));
   };
 
   const confirmBooking = async () => {
@@ -192,9 +196,11 @@ export default function TurfDetailsPage() {
 
   if (loading) {
     return (
-      <Container className="py-20">
-        <TurfDetailsSkeleton />
-      </Container>
+      <div className="min-h-screen bg-slate-50">
+        <Container className="py-20">
+          <TurfDetailsSkeleton />
+        </Container>
+      </div>
     );
   }
 
@@ -363,6 +369,7 @@ export default function TurfDetailsPage() {
                             pricePerHour={turf.pricePerHour}
                             isBookedByMe={slot.isBookedByMe}
                             isSelected={selectedSlots.some((s) => s.id === slot.id)}
+                            isOnWaitlist={waitlistedSlotIds.has(slot.id)}
                           />
                         ))}
                       </div>
@@ -370,6 +377,7 @@ export default function TurfDetailsPage() {
                   ))}
                 </div>
               )}
+              <TurfReviews turfId={turf?.id} />
             </div>
 
             <aside className="lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">

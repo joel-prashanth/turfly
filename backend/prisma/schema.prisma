@@ -92,6 +92,8 @@ model User {
   bookings      Booking[]
   turfReports   TurfReport[]   @relation("TurfReports")
   notifications Notification[]
+  reviews       Review[]       @relation("PlayerReviews")
+  waitlist      Waitlist[]     @relation("PlayerWaitlist")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -117,6 +119,8 @@ model Turf {
 
   cancellationWindowHours Int @default(24)
 
+  businessHours Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -125,6 +129,7 @@ model Turf {
 
   slots   Slot[]
   reports TurfReport[]
+  reviews Review[]
 }
 
 model TurfReport {
@@ -155,6 +160,7 @@ model Slot {
 
   bookings     Booking[]
   bookingSlots BookingSlot[]
+  waitlist     Waitlist[]
 
   createdAt DateTime @default(now())
 }
@@ -199,6 +205,7 @@ model Booking {
 
   extraSlots BookingSlot[]
   payment    Payment?
+  review     Review?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -215,6 +222,38 @@ model Notification {
   read      Boolean  @default(false)
 
   bookingId String?
+
+  createdAt DateTime @default(now())
+}
+
+model Waitlist {
+  id       String @id @default(uuid())
+  playerId String
+  player   User   @relation("PlayerWaitlist", fields: [playerId], references: [id], onDelete: Cascade)
+  slotId   String
+  slot     Slot   @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([playerId, slotId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+
+  bookingId String   @unique
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+
+  turfId    String
+  turf      Turf     @relation(fields: [turfId], references: [id])
+
+  playerId  String
+  player    User     @relation("PlayerReviews", fields: [playerId], references: [id])
+
+  rating    Int      // 1–5
+  comment   String?
+
+  ownerReply      String?
+  ownerRepliedAt  DateTime?
 
   createdAt DateTime @default(now())
 }

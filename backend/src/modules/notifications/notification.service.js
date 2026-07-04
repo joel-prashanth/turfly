@@ -9,8 +9,27 @@ const fmt = (date) =>
     hour12: true,
   });
 
-const notify = (userId, type, title, body, bookingId = null) =>
-  prisma.notification.create({ data: { userId, type, title, body, bookingId } });
+const PREF_MAP = {
+  NEW_BOOKING:                 "notifyNewBooking",
+  BOOKING_CONFIRMED:           "notifyNewBooking",
+  BOOKING_RESCHEDULED:         "notifyNewBooking",
+  BOOKING_CANCELLED:           "notifyCancellation",
+  BOOKING_CANCELLED_BY_PLAYER: "notifyCancellation",
+  BOOKING_CANCELLED_BY_OWNER:  "notifyCancellation",
+  SLOT_AVAILABLE:              "notifyNewBooking",
+};
+
+const notify = async (userId, type, title, body, bookingId = null) => {
+  const prefKey = PREF_MAP[type];
+  if (prefKey) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { [prefKey]: true },
+    });
+    if (!user || user[prefKey] === false) return;
+  }
+  return prisma.notification.create({ data: { userId, type, title, body, bookingId } });
+};
 
 // ── Triggers ────────────────────────────────────────────────
 
@@ -45,8 +64,26 @@ const notifyOwnerCancelled = ({ playerId, turfName, startTime, bookingId }) =>
   notify(
     playerId,
     "BOOKING_CANCELLED_BY_OWNER",
-    "Booking cancelled",
+    "Booking cancelled by venue",
     `Your booking at ${turfName} on ${fmt(startTime)} was cancelled by the venue`,
+    bookingId,
+  );
+
+const notifyBookingCancelled = ({ playerId, turfName, startTime, bookingId }) =>
+  notify(
+    playerId,
+    "BOOKING_CANCELLED",
+    "Booking cancelled",
+    `Your booking at ${turfName} on ${fmt(startTime)} has been cancelled`,
+    bookingId,
+  );
+
+const notifyBookingRescheduled = ({ playerId, turfName, startTime, bookingId }) =>
+  notify(
+    playerId,
+    "BOOKING_RESCHEDULED",
+    "Booking rescheduled",
+    `Your booking at ${turfName} has been moved to ${fmt(startTime)}`,
     bookingId,
   );
 
@@ -76,6 +113,8 @@ const clearAll = (userId) =>
 module.exports = {
   notifyNewBooking,
   notifyBookingConfirmed,
+  notifyBookingCancelled,
+  notifyBookingRescheduled,
   notifyPlayerCancelled,
   notifyOwnerCancelled,
   getNotifications,

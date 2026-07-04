@@ -1,0 +1,16 @@
+.leaflet-control-attribution {
+  font-size: 8px !important;
+  opacity: 0.2 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 4px !important;
+  transition: opacity 0.2s;
+}
+
+.leaflet-control-attribution:hover {
+  opacity: 0.55 !important;
+}
+
+.leaflet-control-attribution a {
+  color: inherit;
+}
